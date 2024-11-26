@@ -2,148 +2,103 @@ package com.oscarhkli.mahjong.score;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import lombok.Value;
+import java.util.Set;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ScoreCalculator {
 
-  public record Pair<K, V>(K key, V value) {
-    public static <K, V> Pair<K, V> of(K key, V value) {
-      return new Pair<>(key, value);
+  public static final int MAHJONG_TYPES = 42;
+
+  int[] constructMahjongTiles(List<String> tileStrings) {
+    var mahjongTiles = new int[MAHJONG_TYPES];
+    for (var tile : tileStrings) {
+      mahjongTiles[MahjongTileType.valueOf(tile).getIndex()]++;
     }
+    return mahjongTiles;
   }
 
   public int calculate(List<String> tiles) {
-    var characters = new ArrayList<String>();
-    var bamboos = new ArrayList<String>();
-    var dots = new ArrayList<String>();
-    var winds = new ArrayList<String>();
-    var dragons = new ArrayList<String>();
-
-    for (var tile : tiles) {
-      if ("Red".equals(tile) || "Green".equals(tile) || "White".equals(tile)) {
-        dragons.add(tile);
-      } else if ("East".equals(tile)
-          || "South".equals(tile)
-          || "West".equals(tile)
-          || "North".equals(tile)) {
-        winds.add(tile);
-      } else if (tile.startsWith("C")) {
-        characters.add(tile);
-      } else if (tile.startsWith("B")) {
-        bamboos.add(tile);
-      } else {
-        dots.add(tile);
-      }
+    var mahjongTiles = constructMahjongTiles(tiles);
+    var characterGroupedTiles = construct("CHARACTER", mahjongTiles);
+    var bambooGroupedTiles = construct("BAMBOO", mahjongTiles);
+    var dotGroupedTiles = construct("DOT", mahjongTiles);
+    var score = 0;
+    if (isCommonHand(characterGroupedTiles, bambooGroupedTiles, dotGroupedTiles, mahjongTiles)) {
+      score++;
     }
-
-    var characterGroupedTiles = construct("Character", characters);
-    var bambooGroupedTiles = construct("Bamboo", bamboos);
-    var dotGroupedTiles = construct("Dot", dots);
-    if (isCommonHand(characterGroupedTiles, bambooGroupedTiles, dotGroupedTiles)) {
-      return 1;
-    }
-
-    return 0;
+    return score;
   }
 
   private boolean isCommonHand(
       GroupedTiles characterGroupedTiles,
       GroupedTiles bambooGroupedTiles,
-      GroupedTiles dotGroupedTiles) {
-    if (characterGroupedTiles.getMelds().size() == 4) {
-      return false;
-    }
-    if (bambooGroupedTiles.getMelds().size() == 4) {
-      return false;
-    }
-    if (dotGroupedTiles.getMelds().size() == 4) {
-      return false;
-    }
-    if (characterGroupedTiles.getMelds().size()
-            + bambooGroupedTiles.getMelds().size()
-            + dotGroupedTiles.getMelds().size()
+      GroupedTiles dotGroupedTiles,
+      int[] mahjongTiles
+  ) {
+    if (characterGroupedTiles.chows().size()
+            + bambooGroupedTiles.chows().size()
+            + dotGroupedTiles.chows().size()
         != 4) {
       return false;
     }
 
-    var unusedCharacterTileCounts = new int[10];
-    for (var unusedTile : characterGroupedTiles.getUnusedTiles()) {
-      unusedCharacterTileCounts[unusedTile.charAt(1) - '0']++;
-    }
-    var characterEye = 0;
     for (var i = 1; i <= 9; i++) {
-      if (unusedCharacterTileCounts[i] != 0 && unusedCharacterTileCounts[i] != 2) {
+      if (characterGroupedTiles.unusedTileArr()[i] != 0
+          && characterGroupedTiles.unusedTileArr()[i] != 2) {
         return false;
       }
-      if (unusedCharacterTileCounts[i] == 2) {
-        if (characterEye != 0) {
-          return false;
-        }
-        characterEye = i;
-      }
-    }
-    var unusedBambooTileCounts = new int[10];
-    for (var unusedTile : bambooGroupedTiles.getUnusedTiles()) {
-      unusedBambooTileCounts[unusedTile.charAt(1) - '0']++;
-    }
-    var bambooEye = 0;
-    for (var i = 1; i <= 9; i++) {
-      if (unusedBambooTileCounts[i] != 0 && unusedBambooTileCounts[i] != 2) {
+      if (bambooGroupedTiles.unusedTileArr()[i] != 0
+          && bambooGroupedTiles.unusedTileArr()[i] != 2) {
         return false;
       }
-      if (unusedBambooTileCounts[i] == 2) {
-        if (bambooEye != 0) {
-          return false;
-        }
-        bambooEye = i;
-      }
-    }
-    var unusedDotTileCounts = new int[10];
-    for (var unusedTile : dotGroupedTiles.getUnusedTiles()) {
-      unusedDotTileCounts[unusedTile.charAt(1) - '0']++;
-    }
-    var dotEye = 0;
-    for (var i = 1; i <= 9; i++) {
-      if (unusedDotTileCounts[i] != 0 && unusedDotTileCounts[i] != 2) {
+      if (dotGroupedTiles.unusedTileArr()[i] != 0 && dotGroupedTiles.unusedTileArr()[i] != 2) {
         return false;
-      }
-      if (unusedDotTileCounts[i] == 2) {
-        if (dotEye != 0) {
-          return false;
-        }
-        dotEye = i;
       }
     }
 
-    return characterEye > 0 && bambooEye == 0 && dotEye == 0
-        || characterEye == 0 && bambooEye > 0 && dotEye == 0
-        || characterEye == 0 && bambooEye == 0 && dotEye > 0;
+    var characterEyes = findEyes(characterGroupedTiles.unusedTileArr(), 1, 10);
+    var bambooEyes = findEyes(bambooGroupedTiles.unusedTileArr(), 1, 10);
+    var dotEyes = findEyes(dotGroupedTiles.unusedTileArr(), 1, 10);
+    var windEyes = findEyes(mahjongTiles, 0, 4);
+    var dragonEyes = findEyes(mahjongTiles, 4, 6);
+
+    return characterEyes.size() + bambooEyes.size() + dotEyes.size() + windEyes.size() + dragonEyes.size() == 1;
   }
 
-  @Value
-  public static class GroupedTiles {
-    String type;
-    List<List<String>> melds;
-    List<String> unusedTiles;
+  public Set<Integer> findEyes(int[] tiles, int from, int toExclusive) {
+    var eyes = new HashSet<Integer>();
+    for (var i = from; i < toExclusive; i++) {
+      if (tiles[i] == 2) {
+        eyes.add(i);
+      }
+    }
+    return eyes;
   }
 
-  public GroupedTiles construct(String type, List<String> tiles) {
-    if (tiles.isEmpty()) {
-      return new GroupedTiles(type, List.of(), List.of());
+  public record GroupedTiles(String type, List<List<MahjongTileType>> chows, int[] unusedTileArr) {}
+
+  public GroupedTiles construct(String type, int[] tiles) {
+    var allTiles = 0;
+    var startIndex = MahjongTileType.getStartTileByType(type).getIndex();
+    for (var i = 0; i < 9; i++) {
+      allTiles += tiles[startIndex + i];
     }
-    var tileCounts = new int[10];
-    for (var tile : tiles) {
-      tileCounts[tile.charAt(1) - '0']++;
+    if (allTiles == 0) {
+      return new GroupedTiles(type, List.of(), new int[10]);
     }
+
+    var targetTiles = new int[10];
+    System.arraycopy(tiles, startIndex, targetTiles, 1, 9);
     var groupedTilesCandidates = new ArrayList<GroupedTiles>();
     groupedTilesCandidates.add(
-        constructGroupedTiles(type, Arrays.copyOf(tileCounts, tileCounts.length), List.of()));
+        constructGroupedTiles(type, Arrays.copyOf(targetTiles, 10), List.of()));
     for (var i = 1; i <= 9; i++) {
-      if (tileCounts[i] >= 2) {
-        var adjustedTileCounts = Arrays.copyOf(tileCounts, tileCounts.length);
+      if (targetTiles[i] >= 2) {
+        var adjustedTileCounts = Arrays.copyOf(targetTiles, 10);
         adjustedTileCounts[i] -= 2;
         groupedTilesCandidates.add(constructGroupedTiles(type, adjustedTileCounts, List.of(i, i)));
       }
@@ -157,25 +112,21 @@ public class ScoreCalculator {
       return groupedTilesCandidates.getFirst();
     }
     GroupedTiles bestGroupTilesCandidate = null;
-    var maxMeldsSize = -1;
+    var maxChowsSize = -1;
     var maxUnusedPairs = -1;
     for (var current : groupedTilesCandidates) {
-      var currentMeldSize = current.getMelds().size();
-      var unusedTileCounts = new int[10];
-      for (var unusedTile : current.getUnusedTiles()) {
-        unusedTileCounts[unusedTile.charAt(1) - '0']++;
-      }
+      var currentChowSize = current.chows().size();
       var currentUnusedPairs = 0;
-      for (var unusedTileCount : unusedTileCounts) {
+      for (var unusedTileCount : current.unusedTileArr()) {
         if (unusedTileCount >= 2) {
           currentUnusedPairs++;
         }
       }
-      if (currentMeldSize > maxMeldsSize) {
+      if (currentChowSize > maxChowsSize) {
         bestGroupTilesCandidate = current;
-        maxMeldsSize = currentMeldSize;
+        maxChowsSize = currentChowSize;
         maxUnusedPairs = currentUnusedPairs;
-      } else if (currentMeldSize == maxMeldsSize && currentUnusedPairs > maxUnusedPairs) {
+      } else if (currentChowSize == maxChowsSize && currentUnusedPairs > maxUnusedPairs) {
         bestGroupTilesCandidate = current;
         maxUnusedPairs = currentUnusedPairs;
       }
@@ -185,40 +136,32 @@ public class ScoreCalculator {
 
   private GroupedTiles constructGroupedTiles(
       String type, int[] tileCounts, List<Integer> reservedTiles) {
-    var validMelds = new ArrayList<List<Integer>>();
+    var validChowStarts = new ArrayList<Integer>();
     for (var i = 1; i <= 7; i++) {
       while (tileCounts[i] > 0) {
         if (tileCounts[i + 1] == 0 || tileCounts[i + 2] == 0) {
           break;
         }
-        validMelds.add(List.of(i, i + 1, i + 2));
+        validChowStarts.add(i);
         tileCounts[i]--;
         tileCounts[i + 1]--;
         tileCounts[i + 2]--;
       }
     }
 
-    var prefix = type.charAt(0);
-    var melds =
-        validMelds.stream()
+    var startIndex = MahjongTileType.getStartTileByType(type).getIndex();
+    var chows =
+        validChowStarts.stream()
+            .map(validChowStart -> validChowStart + startIndex - 1)
             .map(
-                validMeld ->
-                    validMeld.stream()
-                        .map(tileValue -> String.format("%s%d".formatted(prefix, tileValue)))
+                index ->
+                    Stream.of(index, index + 1, index + 2)
+                        .map(MahjongTileType::valueOfIndex)
                         .toList())
             .toList();
-    var unusedTiles = new ArrayList<String>();
-    for (var i = 1; i <= 9; i++) {
-      for (var j = 0; j < tileCounts[i]; j++) {
-        unusedTiles.add(String.format("%s%d", prefix, i));
-      }
-    }
     for (var reservedTile : reservedTiles) {
-      unusedTiles.add(String.format("%s%d", prefix, reservedTile));
+      tileCounts[reservedTile]++;
     }
-    unusedTiles.sort(String::compareTo);
-
-    return new GroupedTiles(type, melds, unusedTiles);
+    return new GroupedTiles(type, chows, tileCounts);
   }
-
 }
