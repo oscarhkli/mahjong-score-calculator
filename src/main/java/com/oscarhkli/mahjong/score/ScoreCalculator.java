@@ -33,7 +33,7 @@ public class ScoreCalculator {
     var dotGroupedTiles = construct(MahjongSetType.DOT, mahjongTiles);
 
     if (!hasEyes(characterGroupedTiles, bambooGroupedTiles, dotGroupedTiles, mahjongTiles)) {
-      return 0;
+      return -1;
     }
     var score = 0;
     if (isCommonHand(characterGroupedTiles, bambooGroupedTiles, dotGroupedTiles)) {
@@ -129,10 +129,10 @@ public class ScoreCalculator {
 
   public GroupedTiles construct(MahjongSetType mahjongSetType, int[] tiles) {
     var allTiles = 0;
-    var startIndex = mahjongSetType.getStartingTile().getIndex();
+    var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
     var mahjongSetSize = mahjongSetType.getSize();
     for (var i = 0; i < mahjongSetSize; i++) {
-      allTiles += tiles[startIndex + i];
+      allTiles += tiles[startingTileIndex + i];
     }
     if (allTiles == 0) {
       return new GroupedTiles(
@@ -140,17 +140,20 @@ public class ScoreCalculator {
     }
 
     var targetTiles = new int[mahjongSetSize + 1];
-    System.arraycopy(tiles, startIndex, targetTiles, 1, mahjongSetSize);
+    System.arraycopy(tiles, startingTileIndex, targetTiles, 1, mahjongSetSize);
     var groupedTilesCandidates = new HashSet<GroupedTiles>();
     groupedTilesCandidates.add(
         constructGroupedTiles(
-            mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of()));
+            mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), false));
+    groupedTilesCandidates.add(
+        constructGroupedTiles(
+            mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), true));
     for (var i = 1; i <= mahjongSetSize; i++) {
       if (targetTiles[i] >= 2) {
         var adjustedTileCounts = Arrays.copyOf(targetTiles, mahjongSetSize + 1);
         adjustedTileCounts[i] -= 2;
         groupedTilesCandidates.add(
-            constructGroupedTiles(mahjongSetType, adjustedTileCounts, List.of(i, i)));
+            constructGroupedTiles(mahjongSetType, adjustedTileCounts, List.of(i, i), true));
       }
     }
     log.info("groupedTilesCandidates: {}", groupedTilesCandidates);
@@ -175,7 +178,7 @@ public class ScoreCalculator {
           currentUnusedPairs++;
         }
       }
-      log.debug(
+      log.info(
           "currentChowSize: {}, currentUnusedTiles: {}, currentUnusedPairs: {}",
           currentChowSize,
           currentUnusedTiles,
@@ -185,17 +188,17 @@ public class ScoreCalculator {
         maxChowsSize = currentChowSize;
         minUnusedTiles = currentUnusedTiles;
         maxUnusedPairs = currentUnusedPairs;
-        log.debug("currentUnusedTiles < minUnusedTiles");
+        log.info("currentUnusedTiles < minUnusedTiles");
       } else if (currentUnusedTiles == minUnusedTiles) {
         if (currentChowSize > maxChowsSize) {
           bestGroupTilesCandidate = current;
           maxChowsSize = currentChowSize;
           maxUnusedPairs = currentUnusedPairs;
-          log.debug("currentChowSize > maxChowsSize");
+          log.info("currentChowSize > maxChowsSize");
         } else if (currentChowSize == maxChowsSize && currentUnusedPairs > maxUnusedPairs) {
           bestGroupTilesCandidate = current;
           maxUnusedPairs = currentUnusedPairs;
-          log.debug("currentUnusedPairs > maxUnusedPairs");
+          log.info("currentUnusedPairs > maxUnusedPairs");
         }
       }
     }
@@ -203,42 +206,76 @@ public class ScoreCalculator {
   }
 
   private GroupedTiles constructGroupedTiles(
-      MahjongSetType mahjongSetType, int[] tileCounts, List<Integer> reservedTiles) {
+      MahjongSetType mahjongSetType,
+      int[] tileCounts,
+      List<Integer> reservedTiles,
+      boolean checkChowFirst) {
+    var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
+    List<List<MahjongTileType>> chows;
+    List<MahjongTileType> pongs;
+    if (checkChowFirst) {
+      chows = deduceChows(mahjongSetType, tileCounts, startingTileIndex);
+      pongs = deducePongs(mahjongSetType, tileCounts, reservedTiles, startingTileIndex);
+    } else {
+      pongs = deducePongs(mahjongSetType, tileCounts, reservedTiles, startingTileIndex);
+      chows = deduceChows(mahjongSetType, tileCounts, startingTileIndex);
+    }
+    return new GroupedTiles(mahjongSetType, chows, pongs, List.of(), tileCounts);
+  }
+
+  /**
+   * tileCounts may be altered when counting chows
+   * @param mahjongSetType
+   * @param tileCounts
+   * @param startingTileIndex
+   * @return List of deduced Chows
+   */
+  private List<List<MahjongTileType>> deduceChows(
+      MahjongSetType mahjongSetType, int[] tileCounts, int startingTileIndex) {
+    if (!SUITED.equals(mahjongSetType.getFamily())) {
+      return List.of();
+    }
     var validChowStarts = new ArrayList<Integer>();
-    if (SUITED.equals(mahjongSetType.getFamily())) {
-      for (var i = 1; i <= mahjongSetType.getSize() - 2; i++) {
-        while (tileCounts[i] > 0) {
-          if (tileCounts[i + 1] == 0 || tileCounts[i + 2] == 0) {
-            break;
-          }
-          validChowStarts.add(i);
-          tileCounts[i]--;
-          tileCounts[i + 1]--;
-          tileCounts[i + 2]--;
+    for (var i = 1; i <= mahjongSetType.getSize() - 2; i++) {
+      while (tileCounts[i] > 0) {
+        if (tileCounts[i + 1] == 0 || tileCounts[i + 2] == 0) {
+          break;
         }
+        validChowStarts.add(i);
+        tileCounts[i]--;
+        tileCounts[i + 1]--;
+        tileCounts[i + 2]--;
       }
     }
-    var startIndex = mahjongSetType.getStartingTile().getIndex();
-    var chows =
-        validChowStarts.stream()
-            .map(validChowStart -> validChowStart + startIndex - 1)
-            .map(
-                index ->
-                    Stream.of(index, index + 1, index + 2)
-                        .map(MahjongTileType::valueOfIndex)
-                        .toList())
-            .toList();
 
+    return validChowStarts.stream()
+        .map(validChowStart -> validChowStart + startingTileIndex - 1)
+        .map(
+            index ->
+                Stream.of(index, index + 1, index + 2).map(MahjongTileType::valueOfIndex).toList())
+        .toList();
+  }
+
+  /**
+   * tileCounts will be altered when manipulating reserveTiles and counting pongs
+   * @param mahjongSetType
+   * @param tileCounts
+   * @param reservedTiles
+   * @param startingTileIndex
+   * @return List of deduced Pongs
+   */
+  private List<MahjongTileType> deducePongs(
+      MahjongSetType mahjongSetType, int[] tileCounts, List<Integer> reservedTiles, int startingTileIndex) {
     for (var reservedTile : reservedTiles) {
       tileCounts[reservedTile]++;
     }
     var pongs = new ArrayList<MahjongTileType>();
     for (var i = 1; i <= mahjongSetType.getSize(); i++) {
       if (tileCounts[i] == 3) {
-        pongs.add(MahjongTileType.valueOfIndex(startIndex - 1 + i));
+        pongs.add(MahjongTileType.valueOfIndex(startingTileIndex - 1 + i));
         tileCounts[i] -= 3;
       }
     }
-    return new GroupedTiles(mahjongSetType, chows, pongs, List.of(), tileCounts);
+    return pongs;
   }
 }

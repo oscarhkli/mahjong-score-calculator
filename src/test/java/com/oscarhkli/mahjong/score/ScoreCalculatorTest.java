@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.BDDSoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -204,6 +205,16 @@ class ScoreCalculatorTest {
     }
 
     @Test
+    @DisplayName("Test Common Hand with same suited")
+    void testSameSuited() {
+      var tiles =
+          List.of(
+              "D1", "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D5", "D6", "D9", "D9");
+      var score = scoreCalculator.calculate(tiles);
+      then(score).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Test Common Hand with wind eyes")
     void testCommonHandWithWindEyes() {
       var tiles =
@@ -274,6 +285,42 @@ class ScoreCalculatorTest {
   }
 
   @Nested
+  @DisplayName("Test Chicken Hand")
+  class ChickenHandTest {
+
+    @Test
+    @DisplayName("Test with different suited")
+    void testDifferentSuited() {
+      var tiles =
+          List.of(
+              "D1", "D1", "D1", "C2", "C2", "C2", "D3", "D4", "D5", "D7", "D7", "D7", "B9", "B9");
+      var score = scoreCalculator.calculate(tiles);
+      then(score).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Test with same suited")
+    void testSameSuited() {
+      var tiles =
+          List.of(
+              "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D5", "D5", "D7", "D7", "D7", "D9", "D9");
+      var score = scoreCalculator.calculate(tiles);
+      then(score).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Test with same suited2")
+    void testSameSuited2() {
+      var tiles =
+          List.of(
+              "D1", "D1", "D2", "D2", "D2", "D2", "D3", "D4", "D7", "D8", "D9", "D9", "D9", "D9");
+      var score = scoreCalculator.calculate(tiles);
+      then(score).isEqualTo(0);
+    }
+
+  }
+
+  @Nested
   @DisplayName("Test Trick Hand")
   class TrickHandTest {
 
@@ -284,7 +331,7 @@ class ScoreCalculatorTest {
           List.of(
               "D1", "D2", "D3", "B1", "B2", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5");
       var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(0);
+      then(score).isEqualTo(-1);
     }
 
 
@@ -295,7 +342,7 @@ class ScoreCalculatorTest {
           List.of(
               "D1", "WEST", "D3", "B1", "GREEN", "B4", "C1", "C2", "C3", "WHITE", "C5", "C6", "D5", "D5");
       var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(0);
+      then(score).isEqualTo(-1);
     }
   }
 
