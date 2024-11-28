@@ -3,14 +3,13 @@ package com.oscarhkli.mahjong.score;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-import com.oscarhkli.mahjong.score.ScoreCalculator.GroupedTiles;
+import com.oscarhkli.mahjong.score.ScoreCalculator.Melds;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.BDDSoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ class ScoreCalculatorTest {
   @ParameterizedTest
   @MethodSource
   void constructGroupedType(
-      List<String> tiles, MahjongSetType mahjongSetType, List<GroupedTiles> expected) {
+      List<String> tiles, MahjongSetType mahjongSetType, List<Melds> expected) {
     var mahjongTiles = scoreCalculator.constructMahjongTiles(tiles);
     var groupedTiles = scoreCalculator.construct(mahjongSetType, mahjongTiles);
     then(groupedTiles).as("Tiles %s".formatted(tiles)).usingRecursiveComparison().isIn(expected);
@@ -40,28 +39,30 @@ class ScoreCalculatorTest {
             List.of("D1", "D2", "D3"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
                     List.of(),
                     List.of(),
+                    null,
                     new int[10]))),
         Arguments.of(
             List.of("D1", "D1", "D2", "D3", "D3"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
                     List.of(),
                     List.of(),
+                    null,
                     new int[] {0, 1, 0, 1, 0, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of(
                 "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D3", "D4", "D4", "D5", "D5", "D5"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
@@ -70,12 +71,13 @@ class ScoreCalculatorTest {
                         List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
                     List.of(),
                     List.of(),
-                    new int[] {0, 0, 0, 0, 0, 2, 0, 0, 0, 0}))),
+                    MahjongTileType.D5,
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of("D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D4", "D5", "D5", "D5"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
@@ -83,91 +85,100 @@ class ScoreCalculatorTest {
                         List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
                     List.of(MahjongTileType.D5),
                     List.of(),
+                    null,
                     new int[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of("D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
                         List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
                     List.of(),
                     List.of(),
-                    new int[] {0, 0, 2, 0, 0, 0, 0, 0, 0, 0}))),
+                    MahjongTileType.D2,
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of("D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5", "D5"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
                         List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
                     List.of(),
                     List.of(),
-                    new int[] {0, 0, 2, 0, 0, 1, 0, 0, 0, 0}),
-                new GroupedTiles(
+                    MahjongTileType.D2,
+                    new int[] {0, 0, 0, 0, 0, 1, 0, 0, 0, 0}),
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
                         List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
                     List.of(),
                     List.of(),
-                    new int[] {0, 0, 1, 0, 0, 2, 0, 0, 0, 0}))),
+                    MahjongTileType.D5,
+                    new int[] {0, 0, 1, 0, 0, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of("D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5", "D5", "D5", "D5"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
                         List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
                     List.of(MahjongTileType.D5),
                     List.of(),
-                    new int[] {0, 0, 2, 0, 0, 0, 0, 0, 0, 0}))),
+                    MahjongTileType.D2,
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of("D1", "D3", "D5"),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(),
                     List.of(),
                     List.of(),
+                    null,
                     new int[] {0, 1, 0, 1, 0, 1, 0, 0, 0, 0}))),
         Arguments.of(
             List.of(),
             MahjongSetType.DOT,
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.DOT,
                     List.of(),
                     List.of(),
                     List.of(),
+                    null,
                     new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
         Arguments.of(
             List.of("B1", "B1", "B1"),
             "BAMBOO",
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.BAMBOO,
                     List.of(),
                     List.of(MahjongTileType.B1),
                     List.of(),
+                    null,
                     new int[10]))),
         Arguments.of(
             List.of("SOUTH", "SOUTH", "SOUTH", "EAST", "EAST", "EAST", "NORTH", "NORTH"),
             "WIND",
             List.of(
-                new GroupedTiles(
+                new Melds(
                     MahjongSetType.WIND,
                     List.of(),
                     List.of(MahjongTileType.EAST, MahjongTileType.SOUTH),
                     List.of(),
-                    new int[] {0, 0, 0, 0, 2}))));
+                    MahjongTileType.NORTH,
+                    new int[] {0, 0, 0, 0, 0}))));
   }
 
   @Nested
@@ -317,7 +328,6 @@ class ScoreCalculatorTest {
       var score = scoreCalculator.calculate(tiles);
       then(score).isEqualTo(0);
     }
-
   }
 
   @Nested
@@ -334,13 +344,24 @@ class ScoreCalculatorTest {
       then(score).isEqualTo(-1);
     }
 
-
     @Test
     @DisplayName("Test mixed")
     void testMixed() {
       var tiles =
           List.of(
-              "D1", "WEST", "D3", "B1", "GREEN", "B4", "C1", "C2", "C3", "WHITE", "C5", "C6", "D5", "D5");
+              "D1", "WEST", "D3", "B1", "GREEN", "B4", "C1", "C2", "C3", "WHITE", "C5", "C6", "D5",
+              "D5");
+      var score = scoreCalculator.calculate(tiles);
+      then(score).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Test only pairs")
+    void testOnlyPairs() {
+      var tiles =
+          List.of(
+              "D1", "D1", "D3", "D3", "GREEN", "GREEN", "C1", "C1", "C3", "C3", "C5", "C5", "C6",
+              "C6");
       var score = scoreCalculator.calculate(tiles);
       then(score).isEqualTo(-1);
     }

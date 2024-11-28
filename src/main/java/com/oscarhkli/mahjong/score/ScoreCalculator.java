@@ -1,11 +1,10 @@
 package com.oscarhkli.mahjong.score;
 
-import static com.oscarhkli.mahjong.score.MahjongConstant.SUITED;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.Value;
@@ -14,10 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ScoreCalculator {
 
-  public static final int MAHJONG_TYPES = 42;
-
   int[] constructMahjongTiles(List<String> tileStrings) {
-    var mahjongTiles = new int[MAHJONG_TYPES];
+    var mahjongTiles = new int[MahjongConstant.MAHJONG_TYPES];
     for (var tile : tileStrings) {
       mahjongTiles[MahjongTileType.valueOf(tile).getIndex()]++;
     }
@@ -32,7 +29,12 @@ public class ScoreCalculator {
     var bambooGroupedTiles = construct(MahjongSetType.BAMBOO, mahjongTiles);
     var dotGroupedTiles = construct(MahjongSetType.DOT, mahjongTiles);
 
-    if (!hasEyes(characterGroupedTiles, bambooGroupedTiles, dotGroupedTiles, mahjongTiles)) {
+    if (!hasEyes(
+        windGroupedTiles,
+        dragonGroupedTiles,
+        characterGroupedTiles,
+        bambooGroupedTiles,
+        dotGroupedTiles)) {
       return -1;
     }
     var score = 0;
@@ -51,83 +53,66 @@ public class ScoreCalculator {
   }
 
   private boolean hasEyes(
-      GroupedTiles characterGroupedTiles,
-      GroupedTiles bambooGroupedTiles,
-      GroupedTiles dotGroupedTiles,
-      int[] mahjongTiles) {
-    for (var i = 1; i <= 9; i++) {
-      if (characterGroupedTiles.getUnusedTileArr()[i] != 0
-          && characterGroupedTiles.getUnusedTileArr()[i] != 2) {
-        return false;
-      }
-      if (bambooGroupedTiles.getUnusedTileArr()[i] != 0
-          && bambooGroupedTiles.getUnusedTileArr()[i] != 2) {
-        return false;
-      }
-      if (dotGroupedTiles.getUnusedTileArr()[i] != 0
-          && dotGroupedTiles.getUnusedTileArr()[i] != 2) {
+      Melds windMelds, Melds dragonMelds, Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
+    for (var i = 1; i <= MahjongSetType.WIND.getSize(); i++) {
+      if (windMelds.getUnusedTiles()[i] > 0) {
         return false;
       }
     }
-    var characterEyes = findEyes(characterGroupedTiles.getUnusedTileArr(), 1, 10);
-    var bambooEyes = findEyes(bambooGroupedTiles.getUnusedTileArr(), 1, 10);
-    var dotEyes = findEyes(dotGroupedTiles.getUnusedTileArr(), 1, 10);
-    var windEyes = findEyes(mahjongTiles, 0, 4);
-    var dragonEyes = findEyes(mahjongTiles, 4, 6);
-
-    return characterEyes.size()
-            + bambooEyes.size()
-            + dotEyes.size()
-            + windEyes.size()
-            + dragonEyes.size()
-        == 1;
+    for (var i = 1; i <= MahjongSetType.DRAGON.getSize(); i++) {
+      if (dragonMelds.getUnusedTiles()[i] > 0) {
+        return false;
+      }
+    }
+    for (var i = 1; i <= MahjongSetType.DOT.getSize(); i++) {
+      if (characterMelds.getUnusedTiles()[i] > 0) {
+        return false;
+      }
+      if (bambooMelds.getUnusedTiles()[i] > 0) {
+        return false;
+      }
+      if (dotMelds.getUnusedTiles()[i] > 0) {
+        return false;
+      }
+    }
+    var eyes = new HashSet<MahjongTileType>();
+    eyes.add(windMelds.getEye());
+    eyes.add(dragonMelds.getEye());
+    eyes.add(characterMelds.getEye());
+    eyes.add(bambooMelds.getEye());
+    eyes.add(dotMelds.getEye());
+    return eyes.stream().filter(Objects::nonNull).count() == 1;
   }
 
-  private boolean isCommonHand(
-      GroupedTiles characterGroupedTiles,
-      GroupedTiles bambooGroupedTiles,
-      GroupedTiles dotGroupedTiles) {
-    return characterGroupedTiles.getChows().size()
-            + bambooGroupedTiles.getChows().size()
-            + dotGroupedTiles.getChows().size()
+  private boolean isCommonHand(Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
+    return characterMelds.getChows().size()
+            + bambooMelds.getChows().size()
+            + dotMelds.getChows().size()
         == 4;
   }
 
   private boolean isAllInTriplets(
-      GroupedTiles windGroupedTiles,
-      GroupedTiles dragonGroupedTiles,
-      GroupedTiles characterGroupedTiles,
-      GroupedTiles bambooGroupedTiles,
-      GroupedTiles dotGroupedTiles) {
-    return windGroupedTiles.getPongs().size()
-            + dragonGroupedTiles.getPongs().size()
-            + characterGroupedTiles.getPongs().size()
-            + bambooGroupedTiles.getPongs().size()
-            + dotGroupedTiles.getPongs().size()
+      Melds windMelds, Melds dragonMelds, Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
+    return windMelds.getPongs().size()
+            + dragonMelds.getPongs().size()
+            + characterMelds.getPongs().size()
+            + bambooMelds.getPongs().size()
+            + dotMelds.getPongs().size()
         == 4;
   }
 
-  public Set<Integer> findEyes(int[] tiles, int from, int toExclusive) {
-    var eyes = new HashSet<Integer>();
-    for (var i = from; i < toExclusive; i++) {
-      if (tiles[i] == 2) {
-        eyes.add(i);
-      }
-    }
-    return eyes;
-  }
-
   @Value
-  public static class GroupedTiles {
+  public static class Melds {
 
     MahjongSetType mahjongSetType;
     List<List<MahjongTileType>> chows;
     List<MahjongTileType> pongs;
     List<MahjongTileType> kongs;
-    int[] unusedTileArr;
+    MahjongTileType eye;
+    int[] unusedTiles;
   }
 
-  public GroupedTiles construct(MahjongSetType mahjongSetType, int[] tiles) {
+  public Melds construct(MahjongSetType mahjongSetType, int[] tiles) {
     var allTiles = 0;
     var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
     var mahjongSetSize = mahjongSetType.getSize();
@@ -135,13 +120,13 @@ public class ScoreCalculator {
       allTiles += tiles[startingTileIndex + i];
     }
     if (allTiles == 0) {
-      return new GroupedTiles(
-          mahjongSetType, List.of(), List.of(), List.of(), new int[mahjongSetSize + 1]);
+      return new Melds(
+          mahjongSetType, List.of(), List.of(), List.of(), null, new int[mahjongSetSize + 1]);
     }
 
     var targetTiles = new int[mahjongSetSize + 1];
     System.arraycopy(tiles, startingTileIndex, targetTiles, 1, mahjongSetSize);
-    var groupedTilesCandidates = new HashSet<GroupedTiles>();
+    var groupedTilesCandidates = new HashSet<Melds>();
     groupedTilesCandidates.add(
         constructGroupedTiles(
             mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), false));
@@ -160,25 +145,25 @@ public class ScoreCalculator {
     return deduceBestGroupedTiles(groupedTilesCandidates);
   }
 
-  private GroupedTiles deduceBestGroupedTiles(Set<GroupedTiles> groupedTilesCandidates) {
-    if (groupedTilesCandidates.size() == 1) {
-      return groupedTilesCandidates.iterator().next();
+  private Melds deduceBestGroupedTiles(Set<Melds> meldsCandidates) {
+    if (meldsCandidates.size() == 1) {
+      return meldsCandidates.iterator().next();
     }
-    GroupedTiles bestGroupTilesCandidate = null;
+    Melds bestGroupTilesCandidate = null;
     var maxChowsSize = -1;
     var minUnusedTiles = 999;
     var maxUnusedPairs = -1;
-    for (var current : groupedTilesCandidates) {
+    for (var current : meldsCandidates) {
       var currentChowSize = current.getChows().size();
       var currentUnusedTiles = 0;
       var currentUnusedPairs = 0;
-      for (var unusedTileCount : current.getUnusedTileArr()) {
+      for (var unusedTileCount : current.getUnusedTiles()) {
         currentUnusedTiles += unusedTileCount;
         if (unusedTileCount >= 2) {
           currentUnusedPairs++;
         }
       }
-      log.info(
+      log.debug(
           "currentChowSize: {}, currentUnusedTiles: {}, currentUnusedPairs: {}",
           currentChowSize,
           currentUnusedTiles,
@@ -188,24 +173,24 @@ public class ScoreCalculator {
         maxChowsSize = currentChowSize;
         minUnusedTiles = currentUnusedTiles;
         maxUnusedPairs = currentUnusedPairs;
-        log.info("currentUnusedTiles < minUnusedTiles");
+        log.debug("currentUnusedTiles < minUnusedTiles");
       } else if (currentUnusedTiles == minUnusedTiles) {
         if (currentChowSize > maxChowsSize) {
           bestGroupTilesCandidate = current;
           maxChowsSize = currentChowSize;
           maxUnusedPairs = currentUnusedPairs;
-          log.info("currentChowSize > maxChowsSize");
+          log.debug("currentChowSize > maxChowsSize");
         } else if (currentChowSize == maxChowsSize && currentUnusedPairs > maxUnusedPairs) {
           bestGroupTilesCandidate = current;
           maxUnusedPairs = currentUnusedPairs;
-          log.info("currentUnusedPairs > maxUnusedPairs");
+          log.debug("currentUnusedPairs > maxUnusedPairs");
         }
       }
     }
     return bestGroupTilesCandidate;
   }
 
-  private GroupedTiles constructGroupedTiles(
+  private Melds constructGroupedTiles(
       MahjongSetType mahjongSetType,
       int[] tileCounts,
       List<Integer> reservedTiles,
@@ -215,28 +200,38 @@ public class ScoreCalculator {
     List<MahjongTileType> pongs;
     if (checkChowFirst) {
       chows = deduceChows(mahjongSetType, tileCounts, startingTileIndex);
-      pongs = deducePongs(mahjongSetType, tileCounts, reservedTiles, startingTileIndex);
+      pongs = deducePongs(tileCounts, reservedTiles, startingTileIndex);
     } else {
-      pongs = deducePongs(mahjongSetType, tileCounts, reservedTiles, startingTileIndex);
+      pongs = deducePongs(tileCounts, reservedTiles, startingTileIndex);
       chows = deduceChows(mahjongSetType, tileCounts, startingTileIndex);
     }
-    return new GroupedTiles(mahjongSetType, chows, pongs, List.of(), tileCounts);
+
+    MahjongTileType eye = null;
+    for (var i = 1; i < tileCounts.length; i++) {
+      if (tileCounts[i] == 2) {
+        eye = MahjongTileType.valueOfIndex(startingTileIndex - 1 + i);
+        tileCounts[i] = 0;
+        break;
+      }
+    }
+    return new Melds(mahjongSetType, chows, pongs, List.of(), eye, tileCounts);
   }
 
   /**
    * tileCounts may be altered when counting chows
-   * @param mahjongSetType
-   * @param tileCounts
-   * @param startingTileIndex
+   *
+   * @param mahjongSetType Mahjong Set Type, e.g., SUITED, HONOR
+   * @param tileCounts Counter of each tile of the current Mahjong Set Type
+   * @param startingTileIndex Start index of current Mahjong Set Type
    * @return List of deduced Chows
    */
   private List<List<MahjongTileType>> deduceChows(
       MahjongSetType mahjongSetType, int[] tileCounts, int startingTileIndex) {
-    if (!SUITED.equals(mahjongSetType.getFamily())) {
+    if (!MahjongConstant.SUITED.equals(mahjongSetType.getFamily())) {
       return List.of();
     }
     var validChowStarts = new ArrayList<Integer>();
-    for (var i = 1; i <= mahjongSetType.getSize() - 2; i++) {
+    for (var i = 1; i < tileCounts.length - 2; i++) {
       while (tileCounts[i] > 0) {
         if (tileCounts[i + 1] == 0 || tileCounts[i + 2] == 0) {
           break;
@@ -258,19 +253,19 @@ public class ScoreCalculator {
 
   /**
    * tileCounts will be altered when manipulating reserveTiles and counting pongs
-   * @param mahjongSetType
-   * @param tileCounts
-   * @param reservedTiles
-   * @param startingTileIndex
+   *
+   * @param tileCounts Counter of each tile of the current Mahjong Set Type
+   * @param reservedTiles For deducing potential eyes while deducing chows
+   * @param startingTileIndex Start index of current Mahjong Set Type
    * @return List of deduced Pongs
    */
   private List<MahjongTileType> deducePongs(
-      MahjongSetType mahjongSetType, int[] tileCounts, List<Integer> reservedTiles, int startingTileIndex) {
+      int[] tileCounts, List<Integer> reservedTiles, int startingTileIndex) {
     for (var reservedTile : reservedTiles) {
       tileCounts[reservedTile]++;
     }
     var pongs = new ArrayList<MahjongTileType>();
-    for (var i = 1; i <= mahjongSetType.getSize(); i++) {
+    for (var i = 1; i < tileCounts.length; i++) {
       if (tileCounts[i] == 3) {
         pongs.add(MahjongTileType.valueOfIndex(startingTileIndex - 1 + i));
         tileCounts[i] -= 3;
