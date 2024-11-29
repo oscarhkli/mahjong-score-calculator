@@ -2,6 +2,7 @@ package com.oscarhkli.mahjong.score;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -22,83 +23,165 @@ public class ScoreCalculator {
   }
 
   public int calculate(List<String> tiles) {
-    var mahjongTiles = constructMahjongTiles(tiles);
-    var windGroupedTiles = construct(MahjongSetType.WIND, mahjongTiles);
-    var dragonGroupedTiles = construct(MahjongSetType.DRAGON, mahjongTiles);
-    var characterGroupedTiles = construct(MahjongSetType.CHARACTER, mahjongTiles);
-    var bambooGroupedTiles = construct(MahjongSetType.BAMBOO, mahjongTiles);
-    var dotGroupedTiles = construct(MahjongSetType.DOT, mahjongTiles);
+    return calculateScore(calculateWinningHands(tiles));
+  }
 
-    if (!hasEyes(
-        windGroupedTiles,
-        dragonGroupedTiles,
-        characterGroupedTiles,
-        bambooGroupedTiles,
-        dotGroupedTiles)) {
-      return -1;
+  int calculateScore(Set<WinningHandType> winningHandTypes) {
+    if (winningHandTypes.contains(WinningHandType.TRICK_HAND)) {
+      return WinningHandType.TRICK_HAND.getScore();
     }
     var score = 0;
-    if (isCommonHand(characterGroupedTiles, bambooGroupedTiles, dotGroupedTiles)) {
-      score++;
-    }
-    if (isAllInTriplets(
-        windGroupedTiles,
-        dragonGroupedTiles,
-        characterGroupedTiles,
-        bambooGroupedTiles,
-        dotGroupedTiles)) {
-      score += 3;
+    for (var winningHandType : winningHandTypes) {
+      score += winningHandType.getScore();
     }
     return score;
   }
 
+  Set<WinningHandType> calculateWinningHands(List<String> tiles) {
+    var mahjongTiles = constructMahjongTiles(tiles);
+    // Wind and Dragon can only have 1 candidate - pongs with/without eyes
+    var windMelds = construct(MahjongSetType.WIND, mahjongTiles).getFirst();
+    var dragonMelds = construct(MahjongSetType.DRAGON, mahjongTiles).getFirst();
+    var characterMeldsCandidates = construct(MahjongSetType.CHARACTER, mahjongTiles);
+    var bambooMeldsCandidates = construct(MahjongSetType.BAMBOO, mahjongTiles);
+    var dotMeldsCandidates = construct(MahjongSetType.DOT, mahjongTiles);
+
+    if (!hasEyes(
+        windMelds,
+        dragonMelds,
+        characterMeldsCandidates,
+        bambooMeldsCandidates,
+        dotMeldsCandidates)) {
+      return Set.of(WinningHandType.TRICK_HAND);
+    }
+    return deduceWinningHand(
+        windMelds,
+        dragonMelds,
+        characterMeldsCandidates,
+        bambooMeldsCandidates,
+        dotMeldsCandidates);
+  }
+
   private boolean hasEyes(
-      Melds windMelds, Melds dragonMelds, Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
-    for (var i = 1; i <= MahjongSetType.WIND.getSize(); i++) {
-      if (windMelds.getUnusedTiles()[i] > 0) {
-        return false;
-      }
+      Melds windMelds,
+      Melds dragonMelds,
+      List<Melds> characterMeldsCandidates,
+      List<Melds> bambooMeldsCandidates,
+      List<Melds> dotMeldsCandidates) {
+    if (windMelds.getUnusedTileCount() > 0) {
+      return false;
     }
-    for (var i = 1; i <= MahjongSetType.DRAGON.getSize(); i++) {
-      if (dragonMelds.getUnusedTiles()[i] > 0) {
-        return false;
-      }
+    if (dragonMelds.getUnusedTileCount() > 0) {
+      return false;
     }
-    for (var i = 1; i <= MahjongSetType.DOT.getSize(); i++) {
-      if (characterMelds.getUnusedTiles()[i] > 0) {
-        return false;
-      }
-      if (bambooMelds.getUnusedTiles()[i] > 0) {
-        return false;
-      }
-      if (dotMelds.getUnusedTiles()[i] > 0) {
-        return false;
-      }
+    // Check first candidate is already enough as all the remaining candidates must either contain
+    // only those with eyes or contain 1 without eyes
+    var firstCharacterMelds = characterMeldsCandidates.getFirst();
+    if (firstCharacterMelds.getUnusedTileCount() > 0) {
+      return false;
     }
+    var firstBambooMelds = bambooMeldsCandidates.getFirst();
+    if (firstBambooMelds.getUnusedTileCount() > 0) {
+      return false;
+    }
+    var firstDotMelds = dotMeldsCandidates.getFirst();
+    if (firstDotMelds.getUnusedTileCount() > 0) {
+      return false;
+    }
+
     var eyes = new HashSet<MahjongTileType>();
     eyes.add(windMelds.getEye());
     eyes.add(dragonMelds.getEye());
-    eyes.add(characterMelds.getEye());
-    eyes.add(bambooMelds.getEye());
-    eyes.add(dotMelds.getEye());
+    eyes.add(firstCharacterMelds.getEye());
+    eyes.add(firstBambooMelds.getEye());
+    eyes.add(firstDotMelds.getEye());
     return eyes.stream().filter(Objects::nonNull).count() == 1;
   }
 
-  private boolean isCommonHand(Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
-    return characterMelds.getChows().size()
-            + bambooMelds.getChows().size()
-            + dotMelds.getChows().size()
-        == 4;
+  /**
+   * If Suit A has multiple candidates, each of Suit B and C must have only 1 candidate.<br>
+   * If all the other Suit Melds contain Chows, the best choice for Suit A must be the one with
+   * fewer Pongs, i.e., the last candidate.<br>
+   * Otherwise, the Winning Hand will be either All in Triplets or Trick Hand.<br>
+   * The best choice for Suit A would be the one with the one with only Pongs then with only Chows
+   * then otherwise.<br>
+   *
+   * @param suitACandidates target suit to check
+   * @param suitBCandidates the neighbor suit
+   * @param suitCCandidates the neighbor suit
+   * @return best Melds
+   */
+  private Melds selectBestMelds(
+      List<Melds> suitACandidates, List<Melds> suitBCandidates, List<Melds> suitCCandidates) {
+    if (suitACandidates.size() == 1) {
+      return suitACandidates.getFirst();
+    }
+    if (!suitBCandidates.getFirst().getChows().isEmpty()
+        || !suitCCandidates.getFirst().getChows().isEmpty()) {
+      return suitACandidates.getLast();
+    }
+    if (suitACandidates.getFirst().getChows().isEmpty()) {
+      return suitACandidates.getFirst();
+    }
+    if (suitACandidates.getLast().getPongs().isEmpty()) {
+      return suitACandidates.getLast();
+    }
+    return suitACandidates.getFirst();
   }
 
-  private boolean isAllInTriplets(
-      Melds windMelds, Melds dragonMelds, Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
-    return windMelds.getPongs().size()
+  private Set<WinningHandType> deduceWinningHand(
+      Melds windMelds,
+      Melds dragonMelds,
+      List<Melds> characterMeldsCandidates,
+      List<Melds> bambooMeldsCandidates,
+      List<Melds> dotMeldsCandidates) {
+    var characterMelds =
+        selectBestMelds(characterMeldsCandidates, bambooMeldsCandidates, dotMeldsCandidates);
+    var bambooMelds =
+        selectBestMelds(bambooMeldsCandidates, characterMeldsCandidates, dotMeldsCandidates);
+    var dotMelds =
+        selectBestMelds(dotMeldsCandidates, characterMeldsCandidates, bambooMeldsCandidates);
+
+    log.info("windMelds: {}", windMelds);
+    log.info("dragonMelds: {}", dragonMelds);
+    log.debug("characterMelds: {}", characterMelds);
+    log.debug("bambooMelds: {}", bambooMelds);
+    log.debug("dotMelds: {}", dotMelds);
+
+    var winningHandTypes = new HashSet<WinningHandType>();
+    var isChickenHand = true;
+    if (characterMelds.getChows().size()
+            + bambooMelds.getChows().size()
+            + dotMelds.getChows().size()
+        == 4) {
+      winningHandTypes.add(WinningHandType.COMMON_HAND);
+      isChickenHand = false;
+    }
+    if (windMelds.getPongs().size()
             + dragonMelds.getPongs().size()
             + characterMelds.getPongs().size()
             + bambooMelds.getPongs().size()
             + dotMelds.getPongs().size()
-        == 4;
+        == 4) {
+      winningHandTypes.add(WinningHandType.ALL_IN_TRIPLETS);
+      isChickenHand = false;
+    }
+    if ((characterMelds.getChows().size() + characterMelds.getPongs().size() == 4
+            && characterMelds.getEye() != null
+            && characterMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.CHARACTER))
+        || (bambooMelds.getChows().size() + bambooMelds.getPongs().size() == 4
+            && bambooMelds.getEye() != null
+            && bambooMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.BAMBOO))
+        || (dotMelds.getChows().size() + dotMelds.getPongs().size() == 4
+            && dotMelds.getEye() != null
+            && dotMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.DOT))) {
+      winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
+    }
+
+    if (isChickenHand) {
+      winningHandTypes.add(WinningHandType.CHICKEN_HAND);
+    }
+    return winningHandTypes;
   }
 
   @Value
@@ -110,9 +193,11 @@ public class ScoreCalculator {
     List<MahjongTileType> kongs;
     MahjongTileType eye;
     int[] unusedTiles;
+    int unusedTileCount;
+    int unusedPairs;
   }
 
-  public Melds construct(MahjongSetType mahjongSetType, int[] tiles) {
+  public List<Melds> construct(MahjongSetType mahjongSetType, int[] tiles) {
     var allTiles = 0;
     var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
     var mahjongSetSize = mahjongSetType.getSize();
@@ -120,77 +205,57 @@ public class ScoreCalculator {
       allTiles += tiles[startingTileIndex + i];
     }
     if (allTiles == 0) {
-      return new Melds(
-          mahjongSetType, List.of(), List.of(), List.of(), null, new int[mahjongSetSize + 1]);
+      return List.of(
+          new Melds(
+              mahjongSetType,
+              List.of(),
+              List.of(),
+              List.of(),
+              null,
+              new int[mahjongSetSize + 1],
+              0,
+              0));
     }
 
     var targetTiles = new int[mahjongSetSize + 1];
     System.arraycopy(tiles, startingTileIndex, targetTiles, 1, mahjongSetSize);
-    var groupedTilesCandidates = new HashSet<Melds>();
-    groupedTilesCandidates.add(
-        constructGroupedTiles(
+    var meldsCandidates = new HashSet<Melds>();
+    meldsCandidates.add(
+        constructMelds(
             mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), false));
-    groupedTilesCandidates.add(
-        constructGroupedTiles(
+    meldsCandidates.add(
+        constructMelds(
             mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), true));
     for (var i = 1; i <= mahjongSetSize; i++) {
       if (targetTiles[i] >= 2) {
         var adjustedTileCounts = Arrays.copyOf(targetTiles, mahjongSetSize + 1);
         adjustedTileCounts[i] -= 2;
-        groupedTilesCandidates.add(
-            constructGroupedTiles(mahjongSetType, adjustedTileCounts, List.of(i, i), true));
+        meldsCandidates.add(
+            constructMelds(mahjongSetType, adjustedTileCounts, List.of(i, i), true));
       }
     }
-    log.info("groupedTilesCandidates: {}", groupedTilesCandidates);
-    return deduceBestGroupedTiles(groupedTilesCandidates);
+    return deduceBestMelds(meldsCandidates);
   }
 
-  private Melds deduceBestGroupedTiles(Set<Melds> meldsCandidates) {
+  private List<Melds> deduceBestMelds(Set<Melds> meldsCandidates) {
+    var results = new ArrayList<>(meldsCandidates);
     if (meldsCandidates.size() == 1) {
-      return meldsCandidates.iterator().next();
+      return results;
     }
-    Melds bestGroupTilesCandidate = null;
-    var maxChowsSize = -1;
-    var minUnusedTiles = 999;
-    var maxUnusedPairs = -1;
-    for (var current : meldsCandidates) {
-      var currentChowSize = current.getChows().size();
-      var currentUnusedTiles = 0;
-      var currentUnusedPairs = 0;
-      for (var unusedTileCount : current.getUnusedTiles()) {
-        currentUnusedTiles += unusedTileCount;
-        if (unusedTileCount >= 2) {
-          currentUnusedPairs++;
-        }
-      }
-      log.debug(
-          "currentChowSize: {}, currentUnusedTiles: {}, currentUnusedPairs: {}",
-          currentChowSize,
-          currentUnusedTiles,
-          currentUnusedPairs);
-      if (currentUnusedTiles < minUnusedTiles) {
-        bestGroupTilesCandidate = current;
-        maxChowsSize = currentChowSize;
-        minUnusedTiles = currentUnusedTiles;
-        maxUnusedPairs = currentUnusedPairs;
-        log.debug("currentUnusedTiles < minUnusedTiles");
-      } else if (currentUnusedTiles == minUnusedTiles) {
-        if (currentChowSize > maxChowsSize) {
-          bestGroupTilesCandidate = current;
-          maxChowsSize = currentChowSize;
-          maxUnusedPairs = currentUnusedPairs;
-          log.debug("currentChowSize > maxChowsSize");
-        } else if (currentChowSize == maxChowsSize && currentUnusedPairs > maxUnusedPairs) {
-          bestGroupTilesCandidate = current;
-          maxUnusedPairs = currentUnusedPairs;
-          log.debug("currentUnusedPairs > maxUnusedPairs");
-        }
-      }
+    results.sort(
+        Comparator.comparingInt(Melds::getUnusedTileCount)
+            .thenComparingInt(Melds::getUnusedPairs)
+            .thenComparing(Comparator.<Melds>comparingInt(m -> m.getPongs().size()).reversed())
+            .thenComparing(Comparator.<Melds>comparingInt(m1 -> m1.getChows().size()).reversed()));
+    if (results.getFirst().getUnusedTileCount() > 0) {
+      // All combination will be Trick Hand anyway. Simply return the first one
+      return List.of(results.getFirst());
     }
-    return bestGroupTilesCandidate;
+    results.removeIf(m -> m.getUnusedTileCount() > 0 || m.getUnusedPairs() > 0);
+    return results;
   }
 
-  private Melds constructGroupedTiles(
+  private Melds constructMelds(
       MahjongSetType mahjongSetType,
       int[] tileCounts,
       List<Integer> reservedTiles,
@@ -214,7 +279,16 @@ public class ScoreCalculator {
         break;
       }
     }
-    return new Melds(mahjongSetType, chows, pongs, List.of(), eye, tileCounts);
+    var unusedTileCount = 0;
+    var unusedPairs = 0;
+    for (var unusedTile : tileCounts) {
+      unusedTileCount += unusedTile;
+      if (unusedTile >= 2) {
+        unusedPairs++;
+      }
+    }
+    return new Melds(
+        mahjongSetType, chows, pongs, List.of(), eye, tileCounts, unusedTileCount, unusedPairs);
   }
 
   /**

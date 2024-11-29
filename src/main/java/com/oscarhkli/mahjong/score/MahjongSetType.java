@@ -22,4 +22,5 @@ public enum MahjongSetType {
   private final MahjongTileType startingTile;
   private final String family;
   private final int size;
+
 }

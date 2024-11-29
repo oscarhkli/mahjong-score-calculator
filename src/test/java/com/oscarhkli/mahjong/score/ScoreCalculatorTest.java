@@ -6,13 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import com.oscarhkli.mahjong.score.ScoreCalculator.Melds;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.BDDSoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -26,14 +24,16 @@ class ScoreCalculatorTest {
 
   @ParameterizedTest
   @MethodSource
-  void constructGroupedType(
-      List<String> tiles, MahjongSetType mahjongSetType, List<Melds> expected) {
+  void constructMelds(List<String> tiles, MahjongSetType mahjongSetType, List<Melds> expected) {
     var mahjongTiles = scoreCalculator.constructMahjongTiles(tiles);
-    var groupedTiles = scoreCalculator.construct(mahjongSetType, mahjongTiles);
-    then(groupedTiles).as("Tiles %s".formatted(tiles)).usingRecursiveComparison().isIn(expected);
+    var melds = scoreCalculator.construct(mahjongSetType, mahjongTiles);
+    then(melds)
+        .as("Tiles %s".formatted(tiles))
+        .usingRecursiveFieldByFieldElementComparator()
+        .containsExactlyInAnyOrderElementsOf(expected);
   }
 
-  private static Stream<Arguments> constructGroupedType() {
+  private static Stream<Arguments> constructMelds() {
     return Stream.of(
         Arguments.of(
             List.of("D1", "D2", "D3"),
@@ -45,7 +45,9 @@ class ScoreCalculatorTest {
                     List.of(),
                     List.of(),
                     null,
-                    new int[10]))),
+                    new int[10],
+                    0,
+                    0))),
         Arguments.of(
             List.of("D1", "D1", "D2", "D3", "D3"),
             MahjongSetType.DOT,
@@ -56,7 +58,9 @@ class ScoreCalculatorTest {
                     List.of(),
                     List.of(),
                     null,
-                    new int[] {0, 1, 0, 1, 0, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 1, 0, 1, 0, 0, 0, 0, 0, 0},
+                    2,
+                    0))),
         Arguments.of(
             List.of(
                 "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D3", "D4", "D4", "D5", "D5", "D5"),
@@ -72,7 +76,9 @@ class ScoreCalculatorTest {
                     List.of(),
                     List.of(),
                     MahjongTileType.D5,
-                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    0,
+                    0))),
         Arguments.of(
             List.of("D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D4", "D5", "D5", "D5"),
             MahjongSetType.DOT,
@@ -86,7 +92,9 @@ class ScoreCalculatorTest {
                     List.of(MahjongTileType.D5),
                     List.of(),
                     null,
-                    new int[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+                    1,
+                    0))),
         Arguments.of(
             List.of("D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5"),
             MahjongSetType.DOT,
@@ -99,7 +107,9 @@ class ScoreCalculatorTest {
                     List.of(),
                     List.of(),
                     MahjongTileType.D2,
-                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    0,
+                    0))),
         Arguments.of(
             List.of("D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5", "D5"),
             MahjongSetType.DOT,
@@ -108,20 +118,13 @@ class ScoreCalculatorTest {
                     MahjongSetType.DOT,
                     List.of(
                         List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
-                    List.of(),
-                    List.of(),
-                    MahjongTileType.D2,
-                    new int[] {0, 0, 0, 0, 0, 1, 0, 0, 0, 0}),
-                new Melds(
-                    MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
                         List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
                     List.of(),
                     List.of(),
                     MahjongTileType.D5,
-                    new int[] {0, 0, 1, 0, 0, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+                    1,
+                    0))),
         Arguments.of(
             List.of("D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5", "D5", "D5", "D5"),
             MahjongSetType.DOT,
@@ -134,7 +137,40 @@ class ScoreCalculatorTest {
                     List.of(MahjongTileType.D5),
                     List.of(),
                     MahjongTileType.D2,
-                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    0,
+                    0))),
+        Arguments.of(
+            List.of(
+                "D1", "D2", "D3", "D1", "D2", "D3", "D2", "D3", "D4", "D2", "D3", "D4", "D5", "D5"),
+            MahjongSetType.DOT,
+            List.of(
+                new Melds(
+                    MahjongSetType.DOT,
+                    List.of(
+                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
+                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
+                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4),
+                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+                    List.of(),
+                    List.of(),
+                    MahjongTileType.D5,
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    0,
+                    0),
+                new Melds(
+                    MahjongSetType.DOT,
+                    List.of(
+                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
+                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
+                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5),
+                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
+                    List.of(),
+                    List.of(),
+                    MahjongTileType.D2,
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    0,
+                    0))),
         Arguments.of(
             List.of("D1", "D3", "D5"),
             MahjongSetType.DOT,
@@ -145,7 +181,9 @@ class ScoreCalculatorTest {
                     List.of(),
                     List.of(),
                     null,
-                    new int[] {0, 1, 0, 1, 0, 1, 0, 0, 0, 0}))),
+                    new int[] {0, 1, 0, 1, 0, 1, 0, 0, 0, 0},
+                    3,
+                    0))),
         Arguments.of(
             List.of(),
             MahjongSetType.DOT,
@@ -156,7 +194,9 @@ class ScoreCalculatorTest {
                     List.of(),
                     List.of(),
                     null,
-                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))),
+                    new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                    0,
+                    0))),
         Arguments.of(
             List.of("B1", "B1", "B1"),
             "BAMBOO",
@@ -167,7 +207,9 @@ class ScoreCalculatorTest {
                     List.of(MahjongTileType.B1),
                     List.of(),
                     null,
-                    new int[10]))),
+                    new int[10],
+                    0,
+                    0))),
         Arguments.of(
             List.of("SOUTH", "SOUTH", "SOUTH", "EAST", "EAST", "EAST", "NORTH", "NORTH"),
             "WIND",
@@ -178,193 +220,117 @@ class ScoreCalculatorTest {
                     List.of(MahjongTileType.EAST, MahjongTileType.SOUTH),
                     List.of(),
                     MahjongTileType.NORTH,
-                    new int[] {0, 0, 0, 0, 0}))));
+                    new int[] {0, 0, 0, 0, 0},
+                    0,
+                    0))));
   }
 
-  @Nested
-  @DisplayName("Test Winning with Common Hand")
-  class WinningCommonHandTest {
-
-    @Test
-    @DisplayName("Test Common Hand without winds, dragons nor bonus tiles")
-    void testCommonHand() {
-      var tiles =
-          List.of(
-              "D1", "D2", "D3", "B2", "B3", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Test Common Hand with duplicate tiles")
-    void testCommonHandWithDuplicateTiles() {
-      var tiles =
-          List.of(
-              "D1", "D2", "D3", "D2", "D3", "D4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Test Common Hand with smaller eyes")
-    void testCommonHandWithSmallerEyes() {
-      var tiles =
-          List.of(
-              "D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5", "C1", "C2", "C3", "C4", "C5", "C6");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Test Common Hand with same suited")
-    void testSameSuited() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D5", "D6", "D9", "D9");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Test Common Hand with wind eyes")
-    void testCommonHandWithWindEyes() {
-      var tiles =
-          List.of(
-              "D1", "D2", "WEST", "WEST", "D3", "D3", "D4", "D5", "C1", "C2", "C3", "C4", "C5",
-              "C6");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Test Common Hand with dragon eyes")
-    void testCommonHandWithDragonEyes() {
-      var tiles =
-          List.of(
-              "D1", "D2", "RED", "RED", "D3", "D3", "D4", "D5", "C1", "C2", "C3", "C4", "C5", "C6");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(1);
-    }
+  @ParameterizedTest
+  @MethodSource
+  void calculateScore(Set<WinningHandType> fakeWinningHand, int expected) {
+    var score = scoreCalculator.calculateScore(fakeWinningHand);
+    then(score).isEqualTo(expected);
   }
 
-  @Nested
-  @DisplayName("Test Winning with All in Triplets")
-  class WinningAllInTripletsTest {
-
-    @Test
-    @DisplayName("Test All in Triplets without winds, dragons nor bonus tiles")
-    void testCommonHand() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D1", "B2", "B2", "B2", "C5", "C5", "C5", "C7", "C7", "C7", "D5", "D5");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Test All in Triplets wind eyes")
-    void testCommonHandWithWindEyes() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D1", "B2", "B2", "B2", "C5", "C5", "C5", "C7", "C7", "C7", "EAST",
-              "EAST");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Test All in Triplets dragon eyes")
-    void testCommonHandWithDragonEyes() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D1", "B2", "B2", "B2", "C5", "C5", "C5", "C7", "C7", "C7", "GREEN",
-              "GREEN");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Test All in Triplets with wind and dragon tiles")
-    void testCommonHandWithWindAndDragonTiles() {
-      var tiles =
-          List.of(
-              "WEST", "WEST", "WEST", "B2", "B2", "B2", "WHITE", "WHITE", "WHITE", "C7", "C7", "C7",
-              "D5", "D5");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(3);
-    }
+  private static Stream<Arguments> calculateScore() {
+    return Stream.of(
+        Arguments.of(Set.of(WinningHandType.TRICK_HAND), -1),
+        Arguments.of(Set.of(WinningHandType.TRICK_HAND, WinningHandType.ALL_ONE_SUIT), -1),
+        Arguments.of(Set.of(WinningHandType.CHICKEN_HAND, WinningHandType.ALL_ONE_SUIT), 7),
+        Arguments.of(Set.of(WinningHandType.COMMON_HAND, WinningHandType.ALL_ONE_SUIT), 8),
+        Arguments.of(Set.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ALL_ONE_SUIT), 10)
+    );
   }
 
-  @Nested
-  @DisplayName("Test Chicken Hand")
-  class ChickenHandTest {
-
-    @Test
-    @DisplayName("Test with different suited")
-    void testDifferentSuited() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D1", "C2", "C2", "C2", "D3", "D4", "D5", "D7", "D7", "D7", "B9", "B9");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Test with same suited")
-    void testSameSuited() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D5", "D5", "D7", "D7", "D7", "D9", "D9");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Test with same suited2")
-    void testSameSuited2() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D2", "D2", "D2", "D2", "D3", "D4", "D7", "D8", "D9", "D9", "D9", "D9");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(0);
-    }
+  @ParameterizedTest
+  @MethodSource
+  void deduceWinningHands(List<String> tileStrings, Set<WinningHandType> expected) {
+    var winningHandTypes = scoreCalculator.calculateWinningHands(tileStrings);
+    then(winningHandTypes)
+        .as("tiles: %s".formatted(tileStrings))
+        .containsExactlyInAnyOrderElementsOf(expected);
   }
 
-  @Nested
-  @DisplayName("Test Trick Hand")
-  class TrickHandTest {
-
-    @Test
-    @DisplayName("Test with suited")
-    void testSuited() {
-      var tiles =
-          List.of(
-              "D1", "D2", "D3", "B1", "B2", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(-1);
-    }
-
-    @Test
-    @DisplayName("Test mixed")
-    void testMixed() {
-      var tiles =
-          List.of(
-              "D1", "WEST", "D3", "B1", "GREEN", "B4", "C1", "C2", "C3", "WHITE", "C5", "C6", "D5",
-              "D5");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(-1);
-    }
-
-    @Test
-    @DisplayName("Test only pairs")
-    void testOnlyPairs() {
-      var tiles =
-          List.of(
-              "D1", "D1", "D3", "D3", "GREEN", "GREEN", "C1", "C1", "C3", "C3", "C5", "C5", "C6",
-              "C6");
-      var score = scoreCalculator.calculate(tiles);
-      then(score).isEqualTo(-1);
-    }
+  private static Stream<Arguments> deduceWinningHands() {
+    return Stream.of(
+        Arguments.of(
+            List.of(
+                "D1", "D2", "D3", "B2", "B3", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5"),
+            Set.of(WinningHandType.COMMON_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "D2", "D3", "D2", "D3", "D4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5"),
+            Set.of(WinningHandType.COMMON_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "D2", "D2", "D2", "D3", "D3", "D4", "D5", "C1", "C2", "C3", "C4", "C5", "C6"),
+            Set.of(WinningHandType.COMMON_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D5", "D6", "D9", "D9"),
+            Set.of(WinningHandType.COMMON_HAND, WinningHandType.ALL_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "D1", "D2", "WEST", "WEST", "D3", "D3", "D4", "D5", "C1", "C2", "C3", "C4", "C5",
+                "C6"),
+            Set.of(WinningHandType.COMMON_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "B2", "B2", "B2", "C5", "C5", "C5", "C7", "C7", "C7", "D5", "D5"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "B2", "B2", "B2", "C5", "C5", "C5", "C7", "C7", "C7", "EAST",
+                "EAST"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "B2", "B2", "B2", "C5", "C5", "C5", "C7", "C7", "C7", "GREEN",
+                "GREEN"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "WEST", "WEST", "WEST", "B2", "B2", "B2", "WHITE", "WHITE", "WHITE", "C7", "C7",
+                "C7", "D5", "D5"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "C2", "C2", "C2", "D3", "D4", "D5", "D7", "D7", "D7", "B9", "B9"),
+            Set.of(WinningHandType.CHICKEN_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D5", "D5", "D7", "D7", "D7", "D9", "D9"),
+            Set.of(WinningHandType.CHICKEN_HAND, WinningHandType.ALL_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D2", "D2", "D2", "D2", "D3", "D4", "D7", "D8", "D9", "D9", "D9", "D9"),
+            Set.of(WinningHandType.CHICKEN_HAND, WinningHandType.ALL_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "B1", "B1", "B1", "B2", "B2", "B2", "B3", "B3", "B3", "B8", "B8", "B9", "B9", "B9"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ALL_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "B1", "B1", "B1", "B2", "B2", "B2", "B3", "B3", "B3", "B8", "B8", "D9", "D9", "D9"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "B1", "B1", "B1", "B2", "B2", "B2", "B3", "B3", "B3", "B8", "B8", "D1", "D2", "D3"),
+            Set.of(WinningHandType.COMMON_HAND)), // Edge case
+        Arguments.of(
+            List.of(
+                "D1", "D2", "D3", "B1", "B2", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5"),
+            Set.of(WinningHandType.TRICK_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "WEST", "D3", "B1", "GREEN", "B4", "C1", "C2", "C3", "WHITE", "C5", "C6",
+                "D5", "D5"),
+            Set.of(WinningHandType.TRICK_HAND)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D3", "D3", "GREEN", "GREEN", "C1", "C1", "C3", "C3", "C5", "C5", "C6",
+                "C6"),
+            Set.of(WinningHandType.TRICK_HAND)));
   }
 
   @ParameterizedTest

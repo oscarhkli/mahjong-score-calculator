@@ -51,28 +51,6 @@ public enum MahjongTileType {
 
   private final int index;
 
-  public static MahjongTileType getStartTileByType(String type) {
-    if ("WIND".equals(type)) {
-      return MahjongTileType.EAST;
-    }
-    if ("DRAGON".equals(type)) {
-      return MahjongTileType.RED;
-    }
-    if ("CHARACTER".equals(type)) {
-      return MahjongTileType.C1;
-    }
-    if ("BAMBOO".equals(type)) {
-      return MahjongTileType.B1;
-    }
-    if ("DOT".equals(type)) {
-      return MahjongTileType.D1;
-    }
-    if ("FLOWER".equals(type)) {
-      return MahjongTileType.F1;
-    }
-    return MahjongTileType.S1;
-  }
-
   public static MahjongTileType valueOfIndex(int index) {
     for (MahjongTileType tileType : MahjongTileType.values()) {
       if (tileType.index == index) {
@@ -80,5 +58,11 @@ public enum MahjongTileType {
       }
     }
     return null;
+  }
+
+  public boolean isMahjongSetTypeEqualTo(MahjongSetType mahjongSetType) {
+    var start = mahjongSetType.getStartingTile().getIndex();
+    var end = start + mahjongSetType.getSize() - 1;
+    return this.getIndex() >= start && this.getIndex() <= end;
   }
 }
