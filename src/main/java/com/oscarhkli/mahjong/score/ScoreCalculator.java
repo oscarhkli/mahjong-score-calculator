@@ -30,6 +30,9 @@ public class ScoreCalculator {
     if (winningHandTypes.contains(WinningHandType.TRICK_HAND)) {
       return WinningHandType.TRICK_HAND.getScore();
     }
+    if (winningHandTypes.contains(WinningHandType.ALL_HONOR_TILES)) {
+      return WinningHandType.ALL_HONOR_TILES.getScore();
+    }
     var score = 0;
     for (var winningHandType : winningHandTypes) {
       score += winningHandType.getScore();
@@ -166,7 +169,12 @@ public class ScoreCalculator {
       winningHandTypes.add(WinningHandType.ALL_IN_TRIPLETS);
       isChickenHand = false;
     }
-    if ((characterMelds.getChows().size() + characterMelds.getPongs().size() == 4
+    var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
+    if (honorPongSize == 4 && (windMelds.getEye() != null || dragonMelds.getEye() != null)) {
+      winningHandTypes.add(WinningHandType.ALL_HONOR_TILES);
+      winningHandTypes.remove(WinningHandType.ALL_IN_TRIPLETS);
+      isChickenHand = false;
+    } else if ((characterMelds.getChows().size() + characterMelds.getPongs().size() == 4
             && characterMelds.getEye() != null
             && characterMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.CHARACTER))
         || (bambooMelds.getChows().size() + bambooMelds.getPongs().size() == 4
@@ -176,6 +184,21 @@ public class ScoreCalculator {
             && dotMelds.getEye() != null
             && dotMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.DOT))) {
       winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
+    } else if ((characterMelds.getChows().size() + characterMelds.getPongs().size() + honorPongSize
+                == 4
+            && (characterMelds.getEye() != null
+                || windMelds.getEye() != null
+                || dragonMelds.getEye() != null))
+        || (bambooMelds.getChows().size() + bambooMelds.getPongs().size() + honorPongSize == 4
+            && (bambooMelds.getEye() != null
+                || windMelds.getEye() != null
+                || dragonMelds.getEye() != null))
+        || (dotMelds.getChows().size() + dotMelds.getPongs().size() + honorPongSize == 4
+            && (dotMelds.getEye() != null
+                || windMelds.getEye() != null
+                || dragonMelds.getEye() != null))) {
+      winningHandTypes.add(WinningHandType.MIXED_ONE_SUIT);
+      isChickenHand = false;
     }
 
     if (isChickenHand) {

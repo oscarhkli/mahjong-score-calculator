@@ -238,8 +238,8 @@ class ScoreCalculatorTest {
         Arguments.of(Set.of(WinningHandType.TRICK_HAND, WinningHandType.ALL_ONE_SUIT), -1),
         Arguments.of(Set.of(WinningHandType.CHICKEN_HAND, WinningHandType.ALL_ONE_SUIT), 7),
         Arguments.of(Set.of(WinningHandType.COMMON_HAND, WinningHandType.ALL_ONE_SUIT), 8),
-        Arguments.of(Set.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ALL_ONE_SUIT), 10)
-    );
+        Arguments.of(Set.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ALL_ONE_SUIT), 10),
+        Arguments.of(Set.of(WinningHandType.ALL_HONOR_TILES, WinningHandType.ALL_ONE_SUIT), 10));
   }
 
   @ParameterizedTest
@@ -316,7 +316,37 @@ class ScoreCalculatorTest {
         Arguments.of(
             List.of(
                 "B1", "B1", "B1", "B2", "B2", "B2", "B3", "B3", "B3", "B8", "B8", "D1", "D2", "D3"),
-            Set.of(WinningHandType.COMMON_HAND)), // Edge case
+            Set.of(WinningHandType.COMMON_HAND)), // Edge cass
+        Arguments.of(
+            List.of(
+                "B1", "B1", "B1", "B2", "B2", "B2", "B3", "B3", "B3", "B9", "B9", "B9", "WEST",
+                "WEST"),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.MIXED_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "B1", "B1", "B1", "B2", "B2", "B2", "B3", "B3", "B3", "B7", "B8", "B9", "WEST",
+                "WEST"),
+            Set.of(WinningHandType.COMMON_HAND, WinningHandType.MIXED_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "B1", "B1", "B1", "B2", "B2", "B2", "B4", "B5", "B6", "B7", "B8", "B9", "WEST",
+                "WEST"),
+            Set.of(WinningHandType.MIXED_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "EAST", "EAST", "EAST", "SOUTH", "SOUTH", "SOUTH", "WEST", "WEST", "WEST", "RED",
+                "RED", "RED", "GREEN", "GREEN"),
+            Set.of(WinningHandType.ALL_HONOR_TILES)),
+        Arguments.of(
+            List.of(
+                "EAST", "EAST", "EAST", "SOUTH", "SOUTH", "SOUTH", "WEST", "WEST", "WEST", "NORTH",
+                "NORTH", "NORTH", "GREEN", "GREEN"),
+            Set.of(WinningHandType.ALL_HONOR_TILES)),
+        Arguments.of(
+            List.of(
+                "EAST", "EAST", "EAST", "SOUTH", "SOUTH", "SOUTH", "WHITE", "WHITE", "WHITE", "RED",
+                "RED", "RED", "GREEN", "GREEN"),
+            Set.of(WinningHandType.ALL_HONOR_TILES)),
         Arguments.of(
             List.of(
                 "D1", "D2", "D3", "B1", "B2", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5"),
