@@ -42,6 +42,11 @@ public class ScoreCalculator {
 
   Set<WinningHandType> calculateWinningHands(List<String> tiles) {
     var mahjongTiles = constructMahjongTiles(tiles);
+
+    if (isThirteenOrphans(mahjongTiles)) {
+      return Set.of(WinningHandType.THIRTEEN_ORPHANS);
+    }
+
     // Wind and Dragon can only have 1 candidate - pongs with/without eyes
     var windMelds = construct(MahjongSetType.WIND, mahjongTiles).getFirst();
     var dragonMelds = construct(MahjongSetType.DRAGON, mahjongTiles).getFirst();
@@ -63,6 +68,35 @@ public class ScoreCalculator {
         characterMeldsCandidates,
         bambooMeldsCandidates,
         dotMeldsCandidates);
+  }
+
+  private boolean isThirteenOrphans(int[] mahjongTiles) {
+    var mahjongTileTypes =
+        new MahjongTileType[] {
+          MahjongTileType.EAST,
+          MahjongTileType.SOUTH,
+          MahjongTileType.WEST,
+          MahjongTileType.NORTH,
+          MahjongTileType.RED,
+          MahjongTileType.GREEN,
+          MahjongTileType.WHITE,
+          MahjongTileType.C1,
+          MahjongTileType.C9,
+          MahjongTileType.B1,
+          MahjongTileType.B9,
+          MahjongTileType.D1,
+          MahjongTileType.D9
+        };
+    var singleCount = 0;
+    var eyeCount = 0;
+    for (var mahjongTileType : mahjongTileTypes) {
+      if (mahjongTiles[mahjongTileType.getIndex()] == 1) {
+        singleCount++;
+      } else if (mahjongTiles[mahjongTileType.getIndex()] == 2) {
+        eyeCount++;
+      }
+    }
+    return singleCount == 12 && eyeCount == 1;
   }
 
   private boolean hasEyes(
@@ -152,13 +186,11 @@ public class ScoreCalculator {
     log.debug("dotMelds: {}", dotMelds);
 
     var winningHandTypes = new HashSet<WinningHandType>();
-    var isChickenHand = true;
     if (characterMelds.getChows().size()
             + bambooMelds.getChows().size()
             + dotMelds.getChows().size()
         == 4) {
       winningHandTypes.add(WinningHandType.COMMON_HAND);
-      isChickenHand = false;
     }
     if (windMelds.getPongs().size()
             + dragonMelds.getPongs().size()
@@ -167,13 +199,23 @@ public class ScoreCalculator {
             + dotMelds.getPongs().size()
         == 4) {
       winningHandTypes.add(WinningHandType.ALL_IN_TRIPLETS);
-      isChickenHand = false;
     }
+
+    if (windMelds.getPongs().size() == 4) {
+      winningHandTypes.add(WinningHandType.GREAT_WINDS);
+    } else if (windMelds.getPongs().size() == 3) {
+      winningHandTypes.add(WinningHandType.SMALL_WINDS);
+    }
+
+    if (dragonMelds.getPongs().size() == 3) {
+      winningHandTypes.add(WinningHandType.GREAT_DRAGON);
+    } else if (dragonMelds.getPongs().size() == 2 && dragonMelds.getEye() != null) {
+      winningHandTypes.add(WinningHandType.SMALL_DRAGON);
+    }
+
     var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
     if (honorPongSize == 4 && (windMelds.getEye() != null || dragonMelds.getEye() != null)) {
       winningHandTypes.add(WinningHandType.ALL_HONOR_TILES);
-      winningHandTypes.remove(WinningHandType.ALL_IN_TRIPLETS);
-      isChickenHand = false;
     } else if ((characterMelds.getChows().size() + characterMelds.getPongs().size() == 4
             && characterMelds.getEye() != null
             && characterMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.CHARACTER))
@@ -198,10 +240,19 @@ public class ScoreCalculator {
                 || windMelds.getEye() != null
                 || dragonMelds.getEye() != null))) {
       winningHandTypes.add(WinningHandType.MIXED_ONE_SUIT);
-      isChickenHand = false;
     }
 
-    if (isChickenHand) {
+    if (winningHandTypes.contains(WinningHandType.GREAT_WINDS)) {
+      winningHandTypes.clear();
+      winningHandTypes.add(WinningHandType.GREAT_WINDS);
+    }
+
+    if (winningHandTypes.contains(WinningHandType.ALL_HONOR_TILES)) {
+      winningHandTypes.clear();
+      winningHandTypes.add(WinningHandType.ALL_HONOR_TILES);
+    }
+
+    if (winningHandTypes.isEmpty()) {
       winningHandTypes.add(WinningHandType.CHICKEN_HAND);
     }
     return winningHandTypes;
@@ -265,11 +316,13 @@ public class ScoreCalculator {
     if (meldsCandidates.size() == 1) {
       return results;
     }
+    log.info("meldsCandidates: {}", meldsCandidates);
     results.sort(
         Comparator.comparingInt(Melds::getUnusedTileCount)
             .thenComparingInt(Melds::getUnusedPairs)
             .thenComparing(Comparator.<Melds>comparingInt(m -> m.getPongs().size()).reversed())
-            .thenComparing(Comparator.<Melds>comparingInt(m1 -> m1.getChows().size()).reversed()));
+            .thenComparing(Comparator.<Melds>comparingInt(m -> m.getChows().size()).reversed())
+            .thenComparing(Melds::getEye));
     if (results.getFirst().getUnusedTileCount() > 0) {
       // All combination will be Trick Hand anyway. Simply return the first one
       return List.of(results.getFirst());
