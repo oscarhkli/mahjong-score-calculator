@@ -233,7 +233,7 @@ class ScoreCalculatorTest {
             "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D1", "D1",
             "D2", "D2", "D2");
     var score = scoreCalculator.calculate(tiles);
-    then(score).isEqualTo(9);
+    then(score).isEqualTo(11);
   }
 
   @ParameterizedTest
@@ -309,7 +309,7 @@ class ScoreCalculatorTest {
             List.of(
                 "WEST", "WEST", "WEST", "B2", "B2", "B2", "WHITE", "WHITE", "WHITE", "C7", "C7",
                 "C7", "D5", "D5"),
-            Set.of(WinningHandType.ALL_IN_TRIPLETS)),
+            Set.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ONE_DRAGON)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "C2", "C2", "C2", "D3", "D4", "D5", "D7", "D7", "D7", "B9", "B9"),
@@ -399,17 +399,21 @@ class ScoreCalculatorTest {
             Set.of(
                 WinningHandType.SMALL_DRAGON,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ALL_IN_TRIPLETS)),
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.TWO_DRAGONS)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D2", "D3",
                 "D2", "D2", "D2"),
-            Set.of(WinningHandType.SMALL_DRAGON, WinningHandType.MIXED_ONE_SUIT)),
+            Set.of(
+                WinningHandType.SMALL_DRAGON,
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.TWO_DRAGONS)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D2", "D3",
                 "C1", "C2", "C3"),
-            Set.of(WinningHandType.SMALL_DRAGON)),
+            Set.of(WinningHandType.SMALL_DRAGON, WinningHandType.TWO_DRAGONS)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "GREEN", "D1",
@@ -417,12 +421,16 @@ class ScoreCalculatorTest {
             Set.of(
                 WinningHandType.GREAT_DRAGON,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT)),
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.THREE_DRAGONS)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "GREEN", "D1",
                 "D3", "D2", "D2", "D2"),
-            Set.of(WinningHandType.GREAT_DRAGON, WinningHandType.MIXED_ONE_SUIT)),
+            Set.of(
+                WinningHandType.GREAT_DRAGON,
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.THREE_DRAGONS)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "GREEN", "D2",
@@ -435,7 +443,8 @@ class ScoreCalculatorTest {
             Set.of(
                 WinningHandType.GREAT_DRAGON,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ALL_IN_TRIPLETS)),
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.THREE_DRAGONS)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "D9", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
@@ -443,7 +452,8 @@ class ScoreCalculatorTest {
             Set.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT)),
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.ONE_DRAGON)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
@@ -451,7 +461,8 @@ class ScoreCalculatorTest {
             Set.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT)),
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.ONE_DRAGON)),
         Arguments.of(
             List.of(
                 "WHITE", "WHITE", "WHITE", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
@@ -459,7 +470,8 @@ class ScoreCalculatorTest {
             Set.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT)),
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.TWO_DRAGONS)),
         Arguments.of(
             List.of(
                 "WHITE", "WHITE", "WHITE", "D9", "D9", "GREEN", "GREEN", "GREEN", "RED", "RED",
@@ -468,12 +480,13 @@ class ScoreCalculatorTest {
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.GREAT_DRAGON)),
+                WinningHandType.GREAT_DRAGON,
+                WinningHandType.THREE_DRAGONS)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "C9", "C9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
                 "SOUTH", "SOUTH"),
-            Set.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS)),
+            Set.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ONE_DRAGON)),
         Arguments.of(
             List.of(
                 "WHITE", "WHITE", "D9", "D9", "D9", "GREEN", "GREEN", "GREEN", "RED", "RED", "RED",
@@ -482,12 +495,14 @@ class ScoreCalculatorTest {
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.SMALL_DRAGON)),
+                WinningHandType.SMALL_DRAGON,
+                WinningHandType.TWO_DRAGONS)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "B9", "B9", "B9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
                 "SOUTH", "SOUTH"),
-            Set.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS)),
+            Set.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.ONE_DRAGON)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "B9", "B9", "B9", "D9", "D9", "D9", "C1", "C1", "C1", "C9", "C9"),

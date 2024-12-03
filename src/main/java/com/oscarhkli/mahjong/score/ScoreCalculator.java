@@ -214,6 +214,14 @@ public class ScoreCalculator {
       winningHandTypes.add(WinningHandType.SMALL_DRAGON);
     }
 
+    if (dragonMelds.getPongs().size() == 1) {
+      winningHandTypes.add(WinningHandType.ONE_DRAGON);
+    } else if (dragonMelds.getPongs().size() == 2) {
+      winningHandTypes.add(WinningHandType.TWO_DRAGONS);
+    } else if (dragonMelds.getPongs().size() == 3) {
+      winningHandTypes.add(WinningHandType.THREE_DRAGONS);
+    }
+
     var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
     var characterOrphans = getOrphans(characterMelds);
     var bambooOrphans = getOrphans(bambooMelds);
