@@ -11,14 +11,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum MahjongSetType {
 
-  WIND(MahjongTileType.EAST, HONOR, 4),
-  DRAGON(MahjongTileType.RED, HONOR, 3),
-  CHARACTER(MahjongTileType.C1, SUITED, 9),
-  BAMBOO(MahjongTileType.B1, SUITED, 9),
-  DOT(MahjongTileType.D1, SUITED, 9),
-  FLOWER(MahjongTileType.F1, BONUS, 4),
-  SEASON(MahjongTileType.S1, BONUS, 4);
+  WIND(0, MahjongTileType.EAST, HONOR, 4),
+  DRAGON(1, MahjongTileType.RED, HONOR, 3),
+  CHARACTER(2, MahjongTileType.C1, SUITED, 9),
+  BAMBOO(3, MahjongTileType.B1, SUITED, 9),
+  DOT(4, MahjongTileType.D1, SUITED, 9),
+  FLOWER(5, MahjongTileType.F1, BONUS, 4),
+  SEASON(6, MahjongTileType.S1, BONUS, 4);
 
+  private final int index;
   private final MahjongTileType startingTile;
   private final String family;
   private final int size;
