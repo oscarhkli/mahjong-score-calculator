@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -214,6 +215,30 @@ public class ScoreCalculator {
     }
 
     var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
+    var characterOrphans = getOrphans(characterMelds);
+    var bambooOrphans = getOrphans(bambooMelds);
+    var dotOrphans = getOrphans(dotMelds);
+    if (characterOrphans.size() + bambooOrphans.size() + dotOrphans.size() + honorPongSize == 4
+        && (windMelds.getEye() != null
+            || dragonMelds.getEye() != null
+            || (MahjongTileType.C1.equals(characterMelds.getEye())
+                || MahjongTileType.C9.equals(characterMelds.getEye()))
+            || (MahjongTileType.B1.equals(bambooMelds.getEye())
+                || MahjongTileType.B9.equals(bambooMelds.getEye()))
+            || (MahjongTileType.D1.equals(dotMelds.getEye())
+                || MahjongTileType.D9.equals(dotMelds.getEye())))) {
+      winningHandTypes.add(WinningHandType.MIXED_ORPHANS);
+    }
+    if (characterOrphans.size() + bambooOrphans.size() + dotOrphans.size() == 4
+        && ((MahjongTileType.C1.equals(characterMelds.getEye())
+                || MahjongTileType.C9.equals(characterMelds.getEye()))
+            || (MahjongTileType.B1.equals(bambooMelds.getEye())
+                || MahjongTileType.B9.equals(bambooMelds.getEye()))
+            || (MahjongTileType.D1.equals(dotMelds.getEye())
+                || MahjongTileType.D9.equals(dotMelds.getEye())))) {
+      winningHandTypes.add(WinningHandType.ORPHANS);
+    }
+
     if (honorPongSize == 4 && (windMelds.getEye() != null || dragonMelds.getEye() != null)) {
       winningHandTypes.add(WinningHandType.ALL_HONOR_TILES);
     } else if ((characterMelds.getChows().size() + characterMelds.getPongs().size() == 4
@@ -225,7 +250,11 @@ public class ScoreCalculator {
         || (dotMelds.getChows().size() + dotMelds.getPongs().size() == 4
             && dotMelds.getEye() != null
             && dotMelds.getEye().isMahjongSetTypeEqualTo(MahjongSetType.DOT))) {
-      winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
+      if (isNineGates(characterMelds) || isNineGates(bambooMelds) || isNineGates(dotMelds)) {
+        winningHandTypes.add(WinningHandType.NINE_GATES);
+      } else {
+        winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
+      }
     } else if ((characterMelds.getChows().size() + characterMelds.getPongs().size() + honorPongSize
                 == 4
             && (characterMelds.getEye() != null
@@ -252,10 +281,36 @@ public class ScoreCalculator {
       winningHandTypes.add(WinningHandType.ALL_HONOR_TILES);
     }
 
+    if (winningHandTypes.contains(WinningHandType.ORPHANS)) {
+      winningHandTypes.clear();
+      winningHandTypes.add(WinningHandType.ORPHANS);
+    }
+
     if (winningHandTypes.isEmpty()) {
       winningHandTypes.add(WinningHandType.CHICKEN_HAND);
     }
     return winningHandTypes;
+  }
+
+  private Set<MahjongTileType> getOrphans(Melds melds) {
+    var startingTile = melds.getMahjongSetType().getStartingTile();
+    var endingTile =
+        MahjongTileType.valueOfIndex(melds.getMahjongSetType().getStartingTile().getIndex() + 8);
+    return melds.getPongs().stream()
+        .filter(
+            mahjongTileType ->
+                mahjongTileType.equals(startingTile) || mahjongTileType.equals(endingTile))
+        .collect(Collectors.toSet());
+  }
+
+  private boolean isNineGates(Melds melds) {
+    var seen = new HashSet<MahjongTileType>();
+    melds.getChows().forEach(seen::addAll);
+    seen.addAll(melds.getPongs());
+    if (melds.getEye() != null) {
+      seen.add(melds.getEye());
+    }
+    return seen.size() == 9;
   }
 
   @Value

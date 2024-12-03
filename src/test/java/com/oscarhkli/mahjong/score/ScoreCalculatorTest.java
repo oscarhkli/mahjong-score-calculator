@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.BDDSoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -225,10 +226,20 @@ class ScoreCalculatorTest {
                     0))));
   }
 
+  @Test
+  void testCalculate() {
+    var tiles =
+        List.of(
+            "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D1", "D1",
+            "D2", "D2", "D2");
+    var score = scoreCalculator.calculate(tiles);
+    then(score).isEqualTo(9);
+  }
+
   @ParameterizedTest
   @MethodSource
-  void calculateScore(Set<WinningHandType> fakeWinningHand, int expected) {
-    var score = scoreCalculator.calculateScore(fakeWinningHand);
+  void calculateScore(Set<WinningHandType> winningHandTypes, int expected) {
+    var score = scoreCalculator.calculateScore(winningHandTypes);
     then(score).isEqualTo(expected);
   }
 
@@ -425,6 +436,74 @@ class ScoreCalculatorTest {
                 WinningHandType.GREAT_DRAGON,
                 WinningHandType.MIXED_ONE_SUIT,
                 WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D9", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
+                "SOUTH", "SOUTH"),
+            Set.of(
+                WinningHandType.MIXED_ORPHANS,
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.MIXED_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
+                "SOUTH", "SOUTH"),
+            Set.of(
+                WinningHandType.MIXED_ORPHANS,
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.MIXED_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "WHITE", "WHITE", "WHITE", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
+                "SOUTH", "SOUTH", "SOUTH"),
+            Set.of(
+                WinningHandType.MIXED_ORPHANS,
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.MIXED_ONE_SUIT)),
+        Arguments.of(
+            List.of(
+                "WHITE", "WHITE", "WHITE", "D9", "D9", "GREEN", "GREEN", "GREEN", "RED", "RED",
+                "RED", "SOUTH", "SOUTH", "SOUTH"),
+            Set.of(
+                WinningHandType.MIXED_ORPHANS,
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.GREAT_DRAGON)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "C9", "C9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
+                "SOUTH", "SOUTH"),
+            Set.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "WHITE", "WHITE", "D9", "D9", "D9", "GREEN", "GREEN", "GREEN", "RED", "RED", "RED",
+                "SOUTH", "SOUTH", "SOUTH"),
+            Set.of(
+                WinningHandType.MIXED_ORPHANS,
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.SMALL_DRAGON)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "B9", "B9", "B9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
+                "SOUTH", "SOUTH"),
+            Set.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "B9", "B9", "B9", "D9", "D9", "D9", "C1", "C1", "C1", "C9", "C9"),
+            Set.of(WinningHandType.ORPHANS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D9", "D9", "D8"),
+            Set.of(WinningHandType.NINE_GATES)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D9", "D9", "D9"),
+            Set.of(WinningHandType.NINE_GATES)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D9", "D9", "D1"),
+            Set.of(WinningHandType.NINE_GATES)),
         Arguments.of(
             List.of(
                 "D1", "D2", "D3", "B1", "B2", "B4", "C1", "C2", "C3", "C4", "C5", "C6", "D5", "D5"),

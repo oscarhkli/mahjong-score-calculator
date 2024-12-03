@@ -9,6 +9,7 @@ public enum WinningHandType {
   TRICK_HAND(-1),
   CHICKEN_HAND(0),
   COMMON_HAND(1),
+  MIXED_ORPHANS(1),
   ALL_IN_TRIPLETS(3),
   MIXED_ONE_SUIT(3),
   SMALL_DRAGON(3),
