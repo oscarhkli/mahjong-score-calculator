@@ -125,15 +125,13 @@ public class MeldsFactory {
     }
     var validChowStarts = new ArrayList<Integer>();
     for (var i = 1; i < tileCounts.length - 2; i++) {
-      while (tileCounts[i] > 0) {
-        if (tileCounts[i + 1] == 0 || tileCounts[i + 2] == 0) {
-          break;
-        }
+      var chowCount = Math.min(tileCounts[i], Math.min(tileCounts[i + 1], tileCounts[i + 2]));
+      for (var j = 0; j < chowCount; j++) {
         validChowStarts.add(i);
-        tileCounts[i]--;
-        tileCounts[i + 1]--;
-        tileCounts[i + 2]--;
       }
+      tileCounts[i] -= chowCount;
+      tileCounts[i + 1] -= chowCount;
+      tileCounts[i + 2] -= chowCount;
     }
 
     return validChowStarts.stream()
