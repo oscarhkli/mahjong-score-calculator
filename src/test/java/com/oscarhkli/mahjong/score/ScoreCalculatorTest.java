@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.BDDSoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,16 +19,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 class ScoreCalculatorTest {
 
   ScoreCalculator scoreCalculator = new ScoreCalculator(new MeldsFactory());
-
-  @Test
-  void testCalculate() {
-    var tiles =
-        List.of(
-            "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D1", "D1",
-            "D2", "D2", "D2");
-    var score = scoreCalculator.calculate(tiles);
-    then(score).isEqualTo(11);
-  }
 
   @ParameterizedTest
   @MethodSource
@@ -57,7 +46,10 @@ class ScoreCalculatorTest {
   @ParameterizedTest
   @MethodSource
   void deduceWinningHands(List<String> tileStrings, List<WinningHandType> expected) {
-    var winningHandTypes = scoreCalculator.calculateWinningHands(tileStrings);
+    var tiles = tileStrings.stream()
+        .map(MahjongTileType::valueOf)
+        .toList();
+    var winningHandTypes = scoreCalculator.calculateWinningHands(tiles);
     then(winningHandTypes)
         .as("tiles: %s".formatted(tileStrings))
         .containsExactlyInAnyOrderElementsOf(expected);
@@ -378,8 +370,8 @@ class ScoreCalculatorTest {
   @ParameterizedTest
   @MethodSource
   void constructMahjongTiles(
-      List<String> tileStrings, Map<Integer, Integer> expected, BDDSoftAssertions softly) {
-    var mahjongTiles = scoreCalculator.constructMahjongTiles(tileStrings);
+      List<MahjongTileType> tiles, Map<Integer, Integer> expected, BDDSoftAssertions softly) {
+    var mahjongTiles = scoreCalculator.constructMahjongTiles(tiles);
 
     assertAll(
         () -> {
@@ -397,12 +389,20 @@ class ScoreCalculatorTest {
     return Stream.of(
         Arguments.of(List.of(), Map.of()),
         Arguments.of(
-            List.of("C1", "C2", "C2"),
+            List.of(MahjongTileType.C1, MahjongTileType.C2, MahjongTileType.C2),
             Map.of(
                 7, 1,
                 8, 2)),
         Arguments.of(
-            List.of("F1", "C2", "WEST", "S1", "D1", "C1", "WEST", "F2"),
+            List.of(
+                MahjongTileType.F1,
+                MahjongTileType.C2,
+                MahjongTileType.WEST,
+                MahjongTileType.S1,
+                MahjongTileType.D1,
+                MahjongTileType.C1,
+                MahjongTileType.WEST,
+                MahjongTileType.F2),
             Map.of(
                 2, 2,
                 7, 1,

@@ -1,0 +1,17 @@
+{
+  "data": {
+    "totalFaans": 8,
+    "winningHands": [
+      {
+        "type": "COMMON_HAND",
+        "name": "Common Hand",
+        "faans": 1
+      },
+      {
+        "type": "ALL_ONE_SUIT",
+        "name": "All One Suit",
+        "faans": 7
+      }
+    ]
+  }
+}

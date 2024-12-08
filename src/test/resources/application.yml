@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: mahjong-score-calculator
+  profiles:
+    active: test
+server:
+  port: 60001

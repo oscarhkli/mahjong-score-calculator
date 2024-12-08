@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: mahjong-score-calculator
+
+---
+spring:
+  config:
+    activate:
+      on-profile: default
+
+server:
+  port: 60001
+
+---
+spring:
+  config:
+    activate:
+      on-profile: cloud
+
+server:
+  port: 8080

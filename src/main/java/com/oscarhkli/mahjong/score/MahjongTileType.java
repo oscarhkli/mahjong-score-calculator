@@ -60,9 +60,4 @@ public enum MahjongTileType {
     return null;
   }
 
-  public boolean isMahjongSetTypeEqualTo(MahjongSetType mahjongSetType) {
-    var start = mahjongSetType.getStartingTile().getIndex();
-    var end = start + mahjongSetType.getSize() - 1;
-    return this.getIndex() >= start && this.getIndex() <= end;
-  }
 }

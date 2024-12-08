@@ -7,23 +7,25 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @AllArgsConstructor
+@Service
 public class ScoreCalculator {
 
   private final MeldsFactory meldsFactory;
 
-  int[] constructMahjongTiles(List<String> tileStrings) {
+  int[] constructMahjongTiles(List<MahjongTileType> tiles) {
     var mahjongTiles = new int[MahjongConstant.MAHJONG_TYPES];
-    for (var tile : tileStrings) {
-      mahjongTiles[MahjongTileType.valueOf(tile).getIndex()]++;
+    for (var tile : tiles) {
+      mahjongTiles[tile.getIndex()]++;
     }
     return mahjongTiles;
   }
 
-  public int calculate(List<String> tiles) {
-    return calculateScore(calculateWinningHands(tiles));
+  public WinningHand calculate(List<MahjongTileType> tiles) {
+    return new WinningHand(calculateWinningHands(tiles));
   }
 
   int calculateScore(List<WinningHandType> winningHandTypes) {
@@ -40,7 +42,7 @@ public class ScoreCalculator {
     return score;
   }
 
-  List<WinningHandType> calculateWinningHands(List<String> tiles) {
+  List<WinningHandType> calculateWinningHands(List<MahjongTileType> tiles) {
     var mahjongTiles = constructMahjongTiles(tiles);
 
     if (isThirteenOrphans(mahjongTiles)) {
