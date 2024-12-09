@@ -19,7 +19,7 @@ public class MahjongController {
 
   private final ScoreCalculator scoreCalculator;
 
-  @GetMapping(path = "/api/v1/mahjong/fanns", produces = "application/json")
+  @GetMapping(path = "/api/v1/mahjong/faans", produces = "application/json")
   public ResponseEntity<WinningHandResponse> deduceWinningHand(
       @RequestHeader HttpHeaders headers, @RequestParam List<MahjongTileType> handTiles) {
     log.info(

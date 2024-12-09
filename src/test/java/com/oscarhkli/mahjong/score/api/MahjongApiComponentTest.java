@@ -23,7 +23,7 @@ class MahjongApiComponentTest {
     var response =
         mockMvc
             .perform(
-                get("/api/v1/mahjong/fanns")
+                get("/api/v1/mahjong/faans")
                     .accept(MediaType.APPLICATION_JSON)
                     .queryParam(
                         "handTiles",
