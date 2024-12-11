@@ -49,6 +49,10 @@ public class ScoreCalculator {
       return List.of(WinningHandType.THIRTEEN_ORPHANS);
     }
 
+    if (isNineGate(mahjongTiles)) {
+      return List.of(WinningHandType.NINE_GATES);
+    }
+
     // Wind and Dragon can only have 1 candidate - pongs with/without eyes
     var windMelds = meldsFactory.construct(MahjongSetType.WIND, mahjongTiles).getFirst();
     var dragonMelds = meldsFactory.construct(MahjongSetType.DRAGON, mahjongTiles).getFirst();
@@ -101,6 +105,21 @@ public class ScoreCalculator {
       }
     }
     return singleCount == 12 && eyeCount == 1;
+  }
+
+  private boolean isNineGate(int[] mahjongTiles) {
+    return Stream.of(MahjongTileType.C1, MahjongTileType.B1, MahjongTileType.D1)
+        .map(MahjongTileType::getIndex)
+        .anyMatch(startIndex -> {
+          var size = 0;
+          for (var i = 0; i < 9; i++) {
+            if (mahjongTiles[startIndex + i] == 0) {
+              return false;
+            }
+            size += mahjongTiles[startIndex + i];
+          }
+          return mahjongTiles[startIndex] >= 3 && mahjongTiles[startIndex + 8] >= 3 && size == 14;
+        });
   }
 
   private boolean isValidWinningHand(
@@ -246,11 +265,7 @@ public class ScoreCalculator {
     }
 
     if (isEither(suitedMelds, Melds::isAllOneSuit)) {
-      if (isEither(suitedMelds, Melds::isNineGates)) {
-        return List.of(WinningHandType.NINE_GATES);
-      } else {
         winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
-      }
     } else if (isEither(suitedMelds, melds -> melds.isMixedOneSuit(windMelds, dragonMelds))) {
       winningHandTypes.add(WinningHandType.MIXED_ONE_SUIT);
     }

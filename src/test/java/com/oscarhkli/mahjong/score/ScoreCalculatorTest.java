@@ -333,6 +333,10 @@ class ScoreCalculatorTest {
             List.of(WinningHandType.NINE_GATES)),
         Arguments.of(
             List.of(
+                "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D9", "D9", "D4"),
+            List.of(WinningHandType.NINE_GATES)),
+        Arguments.of(
+            List.of(
                 "D1", "D1", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D9", "D9", "D1"),
             List.of(WinningHandType.NINE_GATES)),
         Arguments.of(

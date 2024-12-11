@@ -69,28 +69,4 @@ public class Melds {
             == 4
         && (this.hasEyes() || windMelds.hasEyes() || dragonMelds.hasEyes());
   }
-
-  public boolean isNineGates() {
-    var seen = new int[9];
-    var startingIndex = this.mahjongSetType.getStartingTile().getIndex();
-    this.chows.forEach(
-        chow ->
-            chow.forEach(mahjongTileType -> seen[mahjongTileType.getIndex() - startingIndex]++));
-    this.pongs.forEach(pong -> seen[pong.getIndex() - startingIndex] += 3);
-    if (this.eye != null) {
-      seen[this.eye.getIndex() - startingIndex] += 2;
-    }
-    for (var i = 0; i < 9; i++) {
-      seen[i] += unusedTiles[i];
-    }
-
-    var size = 0;
-    for (var i = 1; i < 8; i++) {
-      if (seen[i] == 0) {
-        return false;
-      }
-      size += seen[i];
-    }
-    return seen[0] >= 3 && seen[8] >= 3 && size + seen[0] + seen[8] == 14;
-  }
 }
