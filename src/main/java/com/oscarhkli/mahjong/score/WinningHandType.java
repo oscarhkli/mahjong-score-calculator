@@ -11,7 +11,7 @@ public enum WinningHandType {
   COMMON_HAND(1, "Common Hand"),
   MIXED_ORPHANS(1, "Mixed Orphans"),
   ONE_DRAGON(1, "A Meld of Dragon"),
-  ALL_IN_TRIPLETS(3,"All In Triplets"),
+  ALL_IN_TRIPLETS(3,"All in Triplets"),
   MIXED_ONE_SUIT(3, "Mixed One Suit"),
   SMALL_DRAGON(3, "Small Dragon"),
   SMALL_WINDS(3, "Small Winds"),
