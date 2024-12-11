@@ -247,7 +247,7 @@ public class ScoreCalculator {
 
     if (isEither(suitedMelds, Melds::isAllOneSuit)) {
       if (isEither(suitedMelds, Melds::isNineGates)) {
-        winningHandTypes.add(WinningHandType.NINE_GATES);
+        return List.of(WinningHandType.NINE_GATES);
       } else {
         winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
       }

@@ -1,18 +1,20 @@
 package com.oscarhkli.mahjong.score;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 @Value
+@Slf4j
 public class Melds {
 
   MahjongSetType mahjongSetType;
   List<List<MahjongTileType>> chows;
   List<MahjongTileType> pongs;
-  List<MahjongTileType> kongs;  MahjongTileType eye;
+  List<MahjongTileType> kongs;
+  MahjongTileType eye;
   int[] unusedTiles;
   int unusedTileCount;
   int unusedPairs;
@@ -69,12 +71,26 @@ public class Melds {
   }
 
   public boolean isNineGates() {
-    var seen = new HashSet<MahjongTileType>();
-    this.chows.forEach(seen::addAll);
-    seen.addAll(this.pongs);
+    var seen = new int[9];
+    var startingIndex = this.mahjongSetType.getStartingTile().getIndex();
+    this.chows.forEach(
+        chow ->
+            chow.forEach(mahjongTileType -> seen[mahjongTileType.getIndex() - startingIndex]++));
+    this.pongs.forEach(pong -> seen[pong.getIndex() - startingIndex] += 3);
     if (this.eye != null) {
-      seen.add(this.eye);
+      seen[this.eye.getIndex() - startingIndex] += 2;
     }
-    return seen.size() == 9;
+    for (var i = 0; i < 9; i++) {
+      seen[i] += unusedTiles[i];
+    }
+
+    var size = 0;
+    for (var i = 1; i < 8; i++) {
+      if (seen[i] == 0) {
+        return false;
+      }
+      size += seen[i];
+    }
+    return seen[0] >= 3 && seen[8] >= 3 && size + seen[0] + seen[8] == 14;
   }
 }
