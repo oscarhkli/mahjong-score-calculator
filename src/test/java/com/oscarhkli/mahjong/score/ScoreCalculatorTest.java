@@ -46,9 +46,7 @@ class ScoreCalculatorTest {
   @ParameterizedTest
   @MethodSource
   void deduceWinningHands(List<String> tileStrings, List<WinningHandType> expected) {
-    var tiles = tileStrings.stream()
-        .map(MahjongTileType::valueOf)
-        .toList();
+    var tiles = tileStrings.stream().map(MahjongTileType::valueOf).toList();
     var winningHandTypes = scoreCalculator.calculateWinningHands(tiles);
     then(winningHandTypes)
         .as("tiles: %s".formatted(tileStrings))

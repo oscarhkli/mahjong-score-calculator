@@ -9,5 +9,4 @@ public class MahjongScoreCalculatorApplication {
   public static void main(String[] args) {
     SpringApplication.run(MahjongScoreCalculatorApplication.class, args);
   }
-
 }

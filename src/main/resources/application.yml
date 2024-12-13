@@ -2,6 +2,20 @@ spring:
   application:
     name: mahjong-score-calculator
 
+# TODO: move to config
+auth:
+  username: ${AUTH_USERNAME}
+  password: ${AUTH_PASSWORD}
+  token-role: ROLE_USER
+  role: USER
+  secret-key: ${AUTH_SECRET_KEY}
+  token-expiration-minute: 15
+  refresh-token-expiration-minute: 1440
+logging:
+  include-application-name: false
+  pattern:
+    correlation: ""
+    dateformat: "yyyy-MM-dd HH:mm:ss.SSS"
 ---
 spring:
   config:

@@ -59,5 +59,4 @@ public enum MahjongTileType {
     }
     return null;
   }
-
 }

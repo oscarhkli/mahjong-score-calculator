@@ -21,5 +21,4 @@ public class WinningHand {
     }
     return score;
   }
-
 }

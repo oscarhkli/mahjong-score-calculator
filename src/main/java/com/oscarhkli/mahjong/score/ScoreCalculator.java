@@ -110,16 +110,19 @@ public class ScoreCalculator {
   private boolean isNineGate(int[] mahjongTiles) {
     return Stream.of(MahjongTileType.C1, MahjongTileType.B1, MahjongTileType.D1)
         .map(MahjongTileType::getIndex)
-        .anyMatch(startIndex -> {
-          var size = 0;
-          for (var i = 0; i < 9; i++) {
-            if (mahjongTiles[startIndex + i] == 0) {
-              return false;
-            }
-            size += mahjongTiles[startIndex + i];
-          }
-          return mahjongTiles[startIndex] >= 3 && mahjongTiles[startIndex + 8] >= 3 && size == 14;
-        });
+        .anyMatch(
+            startIndex -> {
+              var size = 0;
+              for (var i = 0; i < 9; i++) {
+                if (mahjongTiles[startIndex + i] == 0) {
+                  return false;
+                }
+                size += mahjongTiles[startIndex + i];
+              }
+              return mahjongTiles[startIndex] >= 3
+                  && mahjongTiles[startIndex + 8] >= 3
+                  && size == 14;
+            });
   }
 
   private boolean isValidWinningHand(
@@ -211,11 +214,7 @@ public class ScoreCalculator {
   }
 
   private List<WinningHandType> deduceWinningHand(
-      Melds windMelds,
-      Melds dragonMelds,
-      Melds characterMelds,
-      Melds bambooMelds,
-      Melds dotMelds) {
+      Melds windMelds, Melds dragonMelds, Melds characterMelds, Melds bambooMelds, Melds dotMelds) {
     var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
     var suitedMelds = Set.of(characterMelds, bambooMelds, dotMelds);
 
@@ -265,7 +264,7 @@ public class ScoreCalculator {
     }
 
     if (isEither(suitedMelds, Melds::isAllOneSuit)) {
-        winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
+      winningHandTypes.add(WinningHandType.ALL_ONE_SUIT);
     } else if (isEither(suitedMelds, melds -> melds.isMixedOneSuit(windMelds, dragonMelds))) {
       winningHandTypes.add(WinningHandType.MIXED_ONE_SUIT);
     }

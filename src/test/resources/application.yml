@@ -5,3 +5,26 @@ spring:
     active: test
 server:
   port: 60001
+auth:
+  username: dummyUser
+  password: $2a$12$Cp2AkwBchYGbrXCae5PKa.Nh9rnTBccUA8tmmvm2TYubSWOXDXkYO
+  token-role: ROLE_USER
+  role: dummyRole
+  secret-key: 4XEyhMzVuxl2qoa/NgegH8COO2J9qouOdnY2ZcZ77I0=
+  token-expiration-minute: 5
+  refresh-token-expiration-minute: 1440
+logging:
+  level:
+    org:
+      apache:
+        http: WARN
+      hibernate:
+        SQL: debug
+        type:
+          descriptor:
+            sql: trace
+      springframework:
+        boot:
+          autoconfigure:
+            mongo:
+              embedded: WARN

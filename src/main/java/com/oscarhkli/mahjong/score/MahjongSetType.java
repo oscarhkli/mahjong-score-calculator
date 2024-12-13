@@ -10,7 +10,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum MahjongSetType {
-
   WIND(0, MahjongTileType.EAST, HONOR, 4),
   DRAGON(1, MahjongTileType.RED, HONOR, 3),
   CHARACTER(2, MahjongTileType.C1, SUITED, 9),
@@ -23,5 +22,4 @@ public enum MahjongSetType {
   private final MahjongTileType startingTile;
   private final String family;
   private final int size;
-
 }
