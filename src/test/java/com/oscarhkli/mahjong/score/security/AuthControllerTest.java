@@ -59,6 +59,7 @@ class AuthControllerTest {
     mockMvc
         .perform(
             post("/auth/login")
+                .secure(true)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isOk())
@@ -75,6 +76,7 @@ class AuthControllerTest {
     mockMvc
         .perform(
             post("/auth/login")
+                .secure(true)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isUnauthorized()) // Expect HTTP 401 Unauthorized
@@ -107,7 +109,8 @@ class AuthControllerTest {
         .perform(
             post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
+                .content(objectMapper.writeValueAsString(loginRequest))
+                .secure(true))
         .andExpect(status().isUnauthorized()) // Expect HTTP 401 Unauthorized
         .andExpect(
             content()
@@ -135,7 +138,8 @@ class AuthControllerTest {
 
     // Mock a cookie being set (manually set in request)
     mockMvc
-        .perform(post("/auth/refresh").cookie(new Cookie("refresh_token", refreshToken)))
+        .perform(
+            post("/auth/refresh").secure(true).cookie(new Cookie("refresh_token", refreshToken)))
 
         // Then: verify new access token is returned
         .andExpect(status().isOk())
@@ -150,7 +154,10 @@ class AuthControllerTest {
 
     // Mock a cookie with invalid refresh token
     mockMvc
-        .perform(post("/auth/refresh").cookie(new Cookie("refresh_token", invalidRefreshToken)))
+        .perform(
+            post("/auth/refresh")
+                .secure(true)
+                .cookie(new Cookie("refresh_token", invalidRefreshToken)))
 
         // Then: verify response is Unauthorized
         .andExpect(status().isUnauthorized());

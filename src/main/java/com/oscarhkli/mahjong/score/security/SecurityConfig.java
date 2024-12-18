@@ -43,6 +43,7 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
+        .requiresChannel(channel -> channel.anyRequest().requiresSecure())
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers("/auth/login")
@@ -77,7 +78,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     var configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:62001")); // Your frontend URL
+    configuration.setAllowedOrigins(List.of("https://localhost:62001")); // Your frontend URL
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
     configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     var source = new UrlBasedCorsConfigurationSource();

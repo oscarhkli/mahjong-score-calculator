@@ -47,6 +47,7 @@ class MahjongControllerTest {
         mockMvc
             .perform(
                 get("/api/v1/mahjong/faans")
+                    .secure(true)
                     .accept(MediaType.APPLICATION_JSON)
                     .queryParam(
                         "handTiles",

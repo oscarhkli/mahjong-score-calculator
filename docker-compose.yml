@@ -3,6 +3,7 @@ services:
     container_name: mahjong-score-calculator
     image: oscarhkli/mahjong-score-calculator
     ports:
-      - 61001:8080
+      - "61001:8080"
+      - "61002:8443"
     env_file:
       - .env # Load variables from .env file
