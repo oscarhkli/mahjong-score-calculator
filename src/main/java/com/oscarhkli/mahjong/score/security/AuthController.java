@@ -83,7 +83,7 @@ public class AuthController {
         .build();
   }
 
-  @PostMapping("/refresh")
+  @PostMapping("/refresh-token")
   public ResponseEntity<TokenResponse> refreshToken(
       @RequestHeader HttpHeaders headers, HttpServletRequest request) {
     log.info(

@@ -139,7 +139,7 @@ class AuthControllerTest {
     // Mock a cookie being set (manually set in request)
     mockMvc
         .perform(
-            post("/auth/refresh").secure(true).cookie(new Cookie("refresh_token", refreshToken)))
+            post("/auth/refresh-token").secure(true).cookie(new Cookie("refresh_token", refreshToken)))
 
         // Then: verify new access token is returned
         .andExpect(status().isOk())
@@ -155,7 +155,7 @@ class AuthControllerTest {
     // Mock a cookie with invalid refresh token
     mockMvc
         .perform(
-            post("/auth/refresh")
+            post("/auth/refresh-token")
                 .secure(true)
                 .cookie(new Cookie("refresh_token", invalidRefreshToken)))
 
