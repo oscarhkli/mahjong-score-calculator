@@ -35,7 +35,6 @@ class MahjongApiComponentTest {
         mockMvc
             .perform(
                 get("/api/v1/mahjong/faans")
-                    .secure(true)
                     .header("Authorization", "Bearer " + token)
                     .accept(MediaType.APPLICATION_JSON)
                     .queryParam(

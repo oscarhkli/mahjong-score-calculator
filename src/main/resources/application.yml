@@ -25,12 +25,7 @@ spring:
 server:
   port: 60001
   ssl:
-    enabled: true
-    key-store: ${KEY_STORE_PATH}/keystore.p12
-    key-store-password: ${KEY_STORE_PASSWORD}
-    key-store-type: PKCS12
-    protocol: TLS
-    key-alias: localdev
+    enabled: false
 
 ---
 spring:
@@ -40,10 +35,3 @@ spring:
 
 server:
   port: 8080
-  ssl:
-    enabled: true
-    key-store: ${KEY_STORE_PATH}/keystore.p12
-    key-store-password: ${KEY_STORE_PASSWORD}
-    key-store-type: PKCS12
-    protocol: TLS
-    key-alias: localdev

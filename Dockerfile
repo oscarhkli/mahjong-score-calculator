@@ -13,6 +13,5 @@ COPY ${DEPENDENCY}/BOOT-INF/classes /app
 # Copy the keystore file
 COPY certificates/ /app/certificates/
 
-#EXPOSE 8443
 # ENTRYPOINT to run the Spring Boot application
 ENTRYPOINT ["java","-Dspring.profiles.active=cloud","-cp","app:app/lib/*","com.oscarhkli.mahjong.score.MahjongScoreCalculatorApplication"]

@@ -59,7 +59,6 @@ class AuthControllerTest {
     mockMvc
         .perform(
             post("/auth/login")
-                .secure(true)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isOk())
@@ -76,7 +75,6 @@ class AuthControllerTest {
     mockMvc
         .perform(
             post("/auth/login")
-                .secure(true)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isUnauthorized()) // Expect HTTP 401 Unauthorized
@@ -109,8 +107,7 @@ class AuthControllerTest {
         .perform(
             post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest))
-                .secure(true))
+                .content(objectMapper.writeValueAsString(loginRequest)))
         .andExpect(status().isUnauthorized()) // Expect HTTP 401 Unauthorized
         .andExpect(
             content()
@@ -138,10 +135,7 @@ class AuthControllerTest {
 
     // Mock a cookie being set (manually set in request)
     mockMvc
-        .perform(
-            post("/auth/refresh-token").secure(true).cookie(new Cookie("refresh_token", refreshToken)))
-
-        // Then: verify new access token is returned
+        .perform(post("/auth/refresh-token").cookie(new Cookie("refresh_token", refreshToken)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.token").exists()); // Check if token is in the response body
   }
@@ -155,11 +149,7 @@ class AuthControllerTest {
     // Mock a cookie with invalid refresh token
     mockMvc
         .perform(
-            post("/auth/refresh-token")
-                .secure(true)
-                .cookie(new Cookie("refresh_token", invalidRefreshToken)))
-
-        // Then: verify response is Unauthorized
+            post("/auth/refresh-token").cookie(new Cookie("refresh_token", invalidRefreshToken)))
         .andExpect(status().isUnauthorized());
   }
 }
