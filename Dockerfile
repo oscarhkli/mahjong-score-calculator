@@ -5,13 +5,14 @@ RUN addgroup -S mahjonguser && adduser -S mahjonguser -G mahjonguser
 USER mahjonguser:mahjonguser
 
 # ARG variables (build-time arguments)
+ARG SPRING_PROFILES_ACTIVE=prod
 ARG DEPENDENCY=target/dependency
 COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY ${DEPENDENCY}/META-INF /app/META-INF
 COPY ${DEPENDENCY}/BOOT-INF/classes /app
 
-# Copy the keystore file
-COPY certificates/ /app/certificates/
+# Set the active profile for Spring Boot application dynamically
+ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 
 # ENTRYPOINT to run the Spring Boot application
-ENTRYPOINT ["java","-Dspring.profiles.active=cloud","-cp","app:app/lib/*","com.oscarhkli.mahjong.score.MahjongScoreCalculatorApplication"]
+ENTRYPOINT ["java","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-cp","app:app/lib/*","com.oscarhkli.mahjong.score.MahjongScoreCalculatorApplication"]

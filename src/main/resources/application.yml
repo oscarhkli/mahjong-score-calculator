@@ -1,7 +1,10 @@
 spring:
   application:
     name: mahjong-score-calculator
-
+  cloud:
+    aws:
+      parameterstore:
+        enabled: false
 auth:
   username: ${AUTH_USERNAME}
   password: ${AUTH_PASSWORD}
@@ -10,6 +13,7 @@ auth:
   secret-key: ${AUTH_SECRET_KEY}
   token-expiration-minute: 15
   refresh-token-expiration-minute: 1440
+
 logging:
   include-application-name: false
   pattern:
@@ -24,14 +28,29 @@ spring:
 
 server:
   port: 60001
-  ssl:
-    enabled: false
 
 ---
 spring:
   config:
     activate:
       on-profile: cloud
+
+server:
+  port: 8080
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import:
+      - aws-parameterstore:/config/mahjong-score-calculator_prod/
+  cloud:
+    aws:
+      parameterstore:
+        enabled: true
+      region:
+        static: us-east-1
 
 server:
   port: 8080

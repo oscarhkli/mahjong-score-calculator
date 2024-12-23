@@ -3,8 +3,14 @@ spring:
     name: mahjong-score-calculator
   profiles:
     active: test
+  cloud:
+    aws:
+      parameterstore:
+        enabled: false
+
 server:
   port: 60001
+
 auth:
   username: dummyUser
   password: $2a$12$Cp2AkwBchYGbrXCae5PKa.Nh9rnTBccUA8tmmvm2TYubSWOXDXkYO
@@ -13,6 +19,7 @@ auth:
   secret-key: 4XEyhMzVuxl2qoa/NgegH8COO2J9qouOdnY2ZcZ77I0=
   token-expiration-minute: 5
   refresh-token-expiration-minute: 1440
+
 logging:
   level:
     org:
