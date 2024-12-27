@@ -68,6 +68,7 @@ public class AuthController {
           .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
           .body(new TokenResponse(token));
     } catch (Exception e) {
+      log.error("Invalid credentials for username {}: {}", loginRequest.username(), e.getMessage());
       throw new CredentialException("Invalid credentials", e);
     }
   }
@@ -114,6 +115,7 @@ public class AuthController {
       // Return the new access token
       return ResponseEntity.ok(new TokenResponse(newAccessToken));
     } catch (Exception e) {
+      log.error("Unable to refresh token: {}", e.getMessage());
       throw new CredentialException("Unable to refresh token", e);
     }
   }
@@ -122,6 +124,7 @@ public class AuthController {
     // Compare incoming credentials with static ones (e.g., hardcoded or from properties)
     if (!loginRequest.isUsernameEqualTo(username)
         || !passwordEncoder.matches(loginRequest.password(), password)) {
+      log.error("Invalid username or password");
       throw new BadCredentialsException("Invalid credentials before authenticationManager");
     }
     log.info("username and password matches");
