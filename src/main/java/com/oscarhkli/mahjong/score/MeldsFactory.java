@@ -5,8 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -15,12 +16,12 @@ import org.springframework.stereotype.Component;
 public class MeldsFactory {
 
   public List<Melds> construct(MahjongSetType mahjongSetType, int[] tiles) {
-    var allTiles = 0;
     var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
     var mahjongSetSize = mahjongSetType.getSize();
-    for (var i = 0; i < mahjongSetSize; i++) {
-      allTiles += tiles[startingTileIndex + i];
-    }
+
+    // Count total tiles
+    var allTiles =
+        Arrays.stream(tiles, startingTileIndex, startingTileIndex + mahjongSetSize).sum();
     if (allTiles == 0) {
       return List.of(
           new Melds(
@@ -36,42 +37,56 @@ public class MeldsFactory {
 
     var targetTiles = new int[mahjongSetSize + 1];
     System.arraycopy(tiles, startingTileIndex, targetTiles, 1, mahjongSetSize);
+
     var meldsCandidates = new HashSet<Melds>();
-    meldsCandidates.add(
-        constructMelds(
-            mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), false));
-    meldsCandidates.add(
-        constructMelds(
-            mahjongSetType, Arrays.copyOf(targetTiles, mahjongSetSize + 1), List.of(), true));
-    for (var i = 1; i <= mahjongSetSize; i++) {
+    addMeldsCandidates(meldsCandidates, mahjongSetType, targetTiles);
+
+    return deduceBestMelds(meldsCandidates);
+  }
+
+  private void addMeldsCandidates(
+      Set<Melds> meldsCandidates, MahjongSetType mahjongSetType, int[] targetTiles) {
+    meldsCandidates.add(constructMelds(mahjongSetType, targetTiles.clone(), List.of(), false));
+    meldsCandidates.add(constructMelds(mahjongSetType, targetTiles.clone(), List.of(), true));
+
+    for (int i = 1; i < targetTiles.length; i++) {
       if (targetTiles[i] >= 2) {
-        var adjustedTileCounts = Arrays.copyOf(targetTiles, mahjongSetSize + 1);
+        var adjustedTileCounts = targetTiles.clone();
         adjustedTileCounts[i] -= 2;
         meldsCandidates.add(
             constructMelds(mahjongSetType, adjustedTileCounts, List.of(i, i), true));
       }
     }
-    return deduceBestMelds(meldsCandidates);
   }
 
   private List<Melds> deduceBestMelds(Set<Melds> meldsCandidates) {
-    var results = new ArrayList<>(meldsCandidates);
-    if (meldsCandidates.size() == 1) {
-      return results;
+    // Sort candidates based on the given criteria
+    var priorityQueue =
+        new PriorityQueue<>(
+            Comparator.comparingInt(Melds::getUnusedTileCount)
+                .thenComparingInt(Melds::getUnusedPairs)
+                .thenComparing((Melds m) -> -m.getPongs().size())
+                .thenComparing((Melds m) -> -m.getChows().size())
+                .thenComparing(Melds::getEye));
+
+    priorityQueue.addAll(meldsCandidates);
+    Objects.requireNonNull(priorityQueue.peek());
+
+    // If no valid melds, return the best Trick Hand candidate
+    if (priorityQueue.size() == 1 || priorityQueue.peek().getUnusedTileCount() > 0) {
+      return List.of(priorityQueue.poll());
     }
-    log.info("meldsCandidates: {}", meldsCandidates);
-    results.sort(
-        Comparator.comparingInt(Melds::getUnusedTileCount)
-            .thenComparingInt(Melds::getUnusedPairs)
-            .thenComparing(Comparator.<Melds>comparingInt(m -> m.getPongs().size()).reversed())
-            .thenComparing(Comparator.<Melds>comparingInt(m -> m.getChows().size()).reversed())
-            .thenComparing(Melds::getEye));
-    if (results.getFirst().getUnusedTileCount() > 0) {
-      // All combination will be Trick Hand anyway. Simply return the first one
-      return List.of(results.getFirst());
+
+    // Collect only valid melds with unusedTileCount == 0 and unusedPairs == 0
+    var bestMelds = new ArrayList<Melds>();
+    while (!priorityQueue.isEmpty()) {
+      var candidate = priorityQueue.poll();
+      if (candidate.getUnusedTileCount() == 0 && candidate.getUnusedPairs() == 0) {
+        bestMelds.add(candidate);
+      }
     }
-    results.removeIf(m -> m.getUnusedTileCount() > 0 || m.getUnusedPairs() > 0);
-    return results;
+
+    return bestMelds;
   }
 
   private Melds constructMelds(
@@ -123,23 +138,21 @@ public class MeldsFactory {
     if (!MahjongConstant.SUITED.equals(mahjongSetType.getFamily())) {
       return List.of();
     }
-    var validChowStarts = new ArrayList<Integer>();
-    for (var i = 1; i < tileCounts.length - 2; i++) {
-      var chowCount = Math.min(tileCounts[i], Math.min(tileCounts[i + 1], tileCounts[i + 2]));
-      for (var j = 0; j < chowCount; j++) {
-        validChowStarts.add(i);
-      }
-      tileCounts[i] -= chowCount;
-      tileCounts[i + 1] -= chowCount;
-      tileCounts[i + 2] -= chowCount;
-    }
 
-    return validChowStarts.stream()
-        .map(validChowStart -> validChowStart + startingTileIndex - 1)
-        .map(
-            index ->
-                Stream.of(index, index + 1, index + 2).map(MahjongTileType::valueOfIndex).toList())
-        .toList();
+    var chows = new ArrayList<List<MahjongTileType>>();
+    for (int i = 1; i < tileCounts.length - 2; i++) {
+      while (tileCounts[i] > 0 && tileCounts[i + 1] > 0 && tileCounts[i + 2] > 0) {
+        chows.add(
+            Arrays.asList(
+                MahjongTileType.valueOfIndex(startingTileIndex - 1 + i),
+                MahjongTileType.valueOfIndex(startingTileIndex - 1 + i + 1),
+                MahjongTileType.valueOfIndex(startingTileIndex - 1 + i + 2)));
+        tileCounts[i]--;
+        tileCounts[i + 1]--;
+        tileCounts[i + 2]--;
+      }
+    }
+    return chows;
   }
 
   /**
