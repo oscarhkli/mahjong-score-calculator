@@ -49,7 +49,11 @@ public class Melds {
   }
 
   public boolean isAllOneSuit() {
-    return this.chows.size() + this.pongs.size() == 4 && this.eye != null;
+    return this.chows.size() + this.getPongKongSize() == 4 && this.eye != null;
+  }
+
+  public int getPongKongSize() {
+    return this.pongs.size() + this.kongs.size();
   }
 
   public boolean isMixedOneSuit(Melds windMelds, Melds dragonMelds) {
@@ -63,9 +67,9 @@ public class Melds {
       return false;
     }
     return this.chows.size()
-                + this.pongs.size()
-                + windMelds.getPongs().size()
-                + dragonMelds.getPongs().size()
+                + this.getPongKongSize()
+                + windMelds.getPongKongSize()
+                + dragonMelds.getPongKongSize()
             == 4
         && (this.hasEyes() || windMelds.hasEyes() || dragonMelds.hasEyes());
   }

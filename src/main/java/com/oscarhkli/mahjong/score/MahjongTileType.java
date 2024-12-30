@@ -59,4 +59,8 @@ public enum MahjongTileType {
     }
     return null;
   }
+
+  public boolean withinRange(int startingIndex, int endingIndexInclusive) {
+    return this.index >= startingIndex && this.index <= endingIndexInclusive;
+  }
 }

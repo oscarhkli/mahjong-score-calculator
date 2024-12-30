@@ -22,6 +22,7 @@ public enum WinningHandType {
   ORPHANS(10, "Orphans"),
   GREAT_WINDS(13, "Great Winds"),
   THIRTEEN_ORPHANS(13, "Thirteen Orphans"),
+  ALL_KONGS(13, "All Kongs"),
   ;
 
   private final int score;

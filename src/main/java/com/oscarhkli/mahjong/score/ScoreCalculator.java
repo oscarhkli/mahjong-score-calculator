@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,14 +17,18 @@ public class ScoreCalculator {
 
   private final MeldsFactory meldsFactory;
 
+  public WinningHand calculate(
+      List<MahjongTileType> tiles,
+      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedPongs,
+      List<MahjongTileType> exposedKongs) {
+    return new WinningHand(calculateWinningHands(tiles, exposedChows, exposedPongs, exposedKongs));
+  }
+
   int[] constructMahjongTiles(List<MahjongTileType> tiles) {
     var mahjongTiles = new int[MahjongConstant.MAHJONG_TYPES];
     tiles.forEach(tile -> mahjongTiles[tile.getIndex()]++);
     return mahjongTiles;
-  }
-
-  public WinningHand calculate(List<MahjongTileType> tiles) {
-    return new WinningHand(calculateWinningHands(tiles));
   }
 
   int calculateScore(List<WinningHandType> winningHandTypes) {
@@ -40,23 +45,44 @@ public class ScoreCalculator {
     return score;
   }
 
-  List<WinningHandType> calculateWinningHands(List<MahjongTileType> tiles) {
+  List<WinningHandType> calculateWinningHands(
+      List<MahjongTileType> tiles,
+      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedPongs,
+      List<MahjongTileType> exposedKongs) {
     var mahjongTiles = constructMahjongTiles(tiles);
+
+    if (isAllKongs(mahjongTiles, exposedKongs)) {
+      return List.of(WinningHandType.ALL_KONGS);
+    }
 
     if (isThirteenOrphans(mahjongTiles)) {
       return List.of(WinningHandType.THIRTEEN_ORPHANS);
     }
 
-    if (isNineGate(mahjongTiles)) {
+    if (isNineGate(mahjongTiles, exposedChows, exposedPongs, exposedKongs)) {
       return List.of(WinningHandType.NINE_GATES);
     }
 
     // Wind and Dragon can only have 1 candidate - pongs with/without eyes
-    var windMelds = meldsFactory.construct(MahjongSetType.WIND, mahjongTiles).getFirst();
-    var dragonMelds = meldsFactory.construct(MahjongSetType.DRAGON, mahjongTiles).getFirst();
-    var characterMeldsCandidates = meldsFactory.construct(MahjongSetType.CHARACTER, mahjongTiles);
-    var bambooMeldsCandidates = meldsFactory.construct(MahjongSetType.BAMBOO, mahjongTiles);
-    var dotMeldsCandidates = meldsFactory.construct(MahjongSetType.DOT, mahjongTiles);
+    var windMelds =
+        meldsFactory
+            .construct(MahjongSetType.WIND, mahjongTiles, exposedChows, exposedPongs, exposedKongs)
+            .getFirst();
+    var dragonMelds =
+        meldsFactory
+            .construct(
+                MahjongSetType.DRAGON, mahjongTiles, exposedChows, exposedPongs, exposedKongs)
+            .getFirst();
+    var characterMeldsCandidates =
+        meldsFactory.construct(
+            MahjongSetType.CHARACTER, mahjongTiles, exposedChows, exposedPongs, exposedKongs);
+    var bambooMeldsCandidates =
+        meldsFactory.construct(
+            MahjongSetType.BAMBOO, mahjongTiles, exposedChows, exposedPongs, exposedKongs);
+    var dotMeldsCandidates =
+        meldsFactory.construct(
+            MahjongSetType.DOT, mahjongTiles, exposedChows, exposedPongs, exposedKongs);
 
     if (!isValidWinningHand(
         windMelds,
@@ -106,7 +132,18 @@ public class ScoreCalculator {
     return singleCount == 12 && eyeCount == 1;
   }
 
-  private boolean isNineGate(int[] mahjongTiles) {
+  private boolean isAllKongs(int[] mahjongTiles, List<MahjongTileType> exposedKongs) {
+    return exposedKongs.size() == 4 && IntStream.of(mahjongTiles).anyMatch(m -> m == 2);
+  }
+
+  private boolean isNineGate(
+      int[] mahjongTiles,
+      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedPongs,
+      List<MahjongTileType> exposedKongs) {
+    if (exposedChows.size() + exposedPongs.size() + exposedKongs.size() > 0) {
+      return false;
+    }
     return Stream.of(MahjongTileType.C1, MahjongTileType.B1, MahjongTileType.D1)
         .map(MahjongTileType::getIndex)
         .anyMatch(
@@ -173,7 +210,7 @@ public class ScoreCalculator {
     if (suitACandidates.getFirst().getChows().isEmpty()) {
       return suitACandidates.getFirst();
     }
-    if (suitACandidates.getLast().getPongs().isEmpty()) {
+    if (suitACandidates.getLast().getPongKongSize() == 0) {
       return suitACandidates.getLast();
     }
     return suitACandidates.getFirst();
@@ -185,10 +222,10 @@ public class ScoreCalculator {
       List<Melds> characterMeldsCandidates,
       List<Melds> bambooMeldsCandidates,
       List<Melds> dotMeldsCandidates) {
-    if (windMelds.getPongs().size() == 4) {
+    if (windMelds.getPongKongSize() == 4) {
       return List.of(WinningHandType.GREAT_WINDS);
     }
-    var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
+    var honorPongSize = windMelds.getPongKongSize() + dragonMelds.getPongKongSize();
     var honorMelds = Set.of(windMelds, dragonMelds);
     if (honorPongSize == 4 && isEither(honorMelds, Melds::hasEyes)) {
       return List.of(WinningHandType.ALL_HONOR_TILES);
@@ -223,31 +260,31 @@ public class ScoreCalculator {
       return List.of(WinningHandType.ORPHANS);
     }
 
-    var honorPongSize = windMelds.getPongs().size() + dragonMelds.getPongs().size();
-    if (honorPongSize
-            + characterMelds.getPongs().size()
-            + bambooMelds.getPongs().size()
-            + dotMelds.getPongs().size()
+    var honorPongKongSize = windMelds.getPongKongSize() + dragonMelds.getPongKongSize();
+    if (honorPongKongSize
+            + characterMelds.getPongKongSize()
+            + bambooMelds.getPongKongSize()
+            + dotMelds.getPongKongSize()
         == 4) {
       winningHandTypes.add(WinningHandType.ALL_IN_TRIPLETS);
-      if (suitedOrphanPongSize + honorPongSize == 4
+      if (suitedOrphanPongSize + honorPongKongSize == 4
           && (isEither(Set.of(windMelds, dragonMelds), Melds::hasEyes)
               || isEither(suitedMelds, Melds::hasOrphanEyes))) {
         winningHandTypes.add(WinningHandType.MIXED_ORPHANS);
       }
     }
 
-    if (windMelds.getPongs().size() == 3 && windMelds.hasEyes()) {
+    if (windMelds.getPongKongSize() == 3 && windMelds.hasEyes()) {
       winningHandTypes.add(WinningHandType.SMALL_WINDS);
     }
 
-    if (dragonMelds.getPongs().size() == 3) {
+    if (dragonMelds.getPongKongSize() == 3) {
       winningHandTypes.add(WinningHandType.GREAT_DRAGON);
     }
-    if (dragonMelds.getPongs().size() == 2 && dragonMelds.hasEyes()) {
+    if (dragonMelds.getPongKongSize() == 2 && dragonMelds.hasEyes()) {
       winningHandTypes.add(WinningHandType.SMALL_DRAGON);
     }
-    for (var i = 0; i < dragonMelds.getPongs().size(); i++) {
+    for (var i = 0; i < dragonMelds.getPongKongSize(); i++) {
       winningHandTypes.add(WinningHandType.ONE_DRAGON);
     }
 

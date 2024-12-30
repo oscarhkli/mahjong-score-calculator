@@ -21,13 +21,22 @@ public class MahjongController {
 
   @GetMapping(path = "/api/v1/mahjong/faans", produces = "application/json")
   public ResponseEntity<WinningHandResponse> deduceWinningHand(
-      @RequestHeader HttpHeaders headers, @RequestParam List<MahjongTileType> handTiles) {
+      @RequestHeader HttpHeaders headers,
+      @RequestParam List<MahjongTileType> handTiles,
+      @RequestParam(required = false, defaultValue = "") List<List<MahjongTileType>> exposedChows,
+      @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedPongs,
+      @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedKongs) {
     log.info(
-        "deduceWinningHand handTiles: {} [referer: {}, user-agent: {}]",
+        "deduceWinningHand handTiles: {}, exposedChows: {}, exposedPongs: {}, exposedKongs: {} [referer: {}, user-agent: {}]",
         handTiles,
+        exposedChows,
+        exposedPongs,
+        exposedKongs,
         headers.getOrEmpty(HttpHeaders.REFERER),
         headers.getOrEmpty(HttpHeaders.USER_AGENT));
-    var winningHandResponse = WinningHandResponse.of(this.scoreCalculator.calculate(handTiles));
+    var winningHandResponse =
+        WinningHandResponse.of(
+            this.scoreCalculator.calculate(handTiles, exposedChows, exposedPongs, exposedKongs));
     log.info(
         "Return WinningHandResponse with totalFaans: {}",
         winningHandResponse.getData().getTotalFaans());
