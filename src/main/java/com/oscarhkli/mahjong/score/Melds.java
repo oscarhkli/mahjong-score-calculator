@@ -3,6 +3,7 @@ package com.oscarhkli.mahjong.score;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,13 +36,13 @@ public class Melds {
     return Set.of(startingTile, endingTile).contains(this.eye);
   }
 
-  public Set<MahjongTileType> getOrphanPongs() {
+  public Set<MahjongTileType> getOrphanPongKongs() {
     if (!this.mahjongSetType.getFamily().equals(MahjongConstant.SUITED)) {
       return Set.of();
     }
     var startingTile = this.mahjongSetType.getStartingTile();
     var endingTile = MahjongTileType.valueOfIndex(startingTile.getIndex() + 8);
-    return this.pongs.stream()
+    return Stream.concat(this.pongs.stream(), this.kongs.stream())
         .filter(
             mahjongTileType ->
                 mahjongTileType.equals(startingTile) || mahjongTileType.equals(endingTile))

@@ -27,7 +27,9 @@ class MeldsFactoryTest {
 
     var melds =
         meldsFactory.construct(
-            mahjongSetType, mahjongTiles, exposedChows, exposedPongs, exposedKongs);
+            mahjongSetType,
+            mahjongTiles,
+            new ExposedMelds(exposedChows, exposedPongs, exposedKongs));
     then(melds)
         .usingRecursiveFieldByFieldElementComparator()
         .containsExactlyInAnyOrderElementsOf(expected);

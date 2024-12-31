@@ -53,7 +53,8 @@ class ScoreCalculatorTest {
       List<WinningHandType> expected) {
     var tiles = tileStrings.stream().map(MahjongTileType::valueOf).toList();
     var winningHandTypes =
-        scoreCalculator.calculateWinningHands(tiles, exposedChows, exposedPongs, exposedKongs);
+        scoreCalculator.calculateWinningHands(
+            tiles, new ExposedMelds(exposedChows, exposedPongs, exposedKongs));
     then(winningHandTypes)
         .as("tiles: %s".formatted(tileStrings))
         .containsExactlyInAnyOrderElementsOf(expected);
@@ -398,6 +399,18 @@ class ScoreCalculatorTest {
                 WinningHandType.ONE_DRAGON)),
         Arguments.of(
             List.of(
+                "D9", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
+                "SOUTH", "SOUTH"),
+            List.of(),
+            List.of(),
+            List.of(MahjongTileType.D1),
+            List.of(
+                WinningHandType.MIXED_ORPHANS,
+                WinningHandType.ALL_IN_TRIPLETS,
+                WinningHandType.MIXED_ONE_SUIT,
+                WinningHandType.ONE_DRAGON)),
+        Arguments.of(
+            List.of(
                 "D1", "D1", "D1", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
                 "SOUTH", "SOUTH"),
             List.of(),
@@ -478,6 +491,13 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
+            List.of(WinningHandType.ORPHANS)),
+        Arguments.of(
+            List.of(
+                "D1", "D1", "D1", "B9", "B9", "B9", "D9", "D9", "D9", "C9", "C9"),
+            List.of(),
+            List.of(),
+            List.of(MahjongTileType.C1),
             List.of(WinningHandType.ORPHANS)),
         Arguments.of(
             List.of(

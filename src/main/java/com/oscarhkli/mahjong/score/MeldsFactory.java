@@ -16,34 +16,16 @@ import org.springframework.stereotype.Component;
 public class MeldsFactory {
 
   public List<Melds> construct(
-      MahjongSetType mahjongSetType,
-      int[] tiles,
-      List<MahjongTileType> exposedChows,
-      List<MahjongTileType> exposedPongs,
-      List<MahjongTileType> exposedKongs) {
+      MahjongSetType mahjongSetType, int[] tiles, ExposedMelds exposedMelds) {
     var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
     var mahjongSetSize = mahjongSetType.getSize();
-    var endingTileIndex = startingTileIndex + mahjongSetSize - 1;
+    var endingTileIndex = mahjongSetType.getEndingTile().getIndex();
 
-    var matchedExposedChows =
-        exposedChows.stream()
-            .filter(chows -> chows.withinRange(startingTileIndex, endingTileIndex))
-            .toList();
-    var matchedExposedPongs =
-        exposedPongs.stream()
-            .filter(pong -> pong.withinRange(startingTileIndex, endingTileIndex))
-            .toList();
-    var matchedExposedKongs =
-        exposedKongs.stream()
-            .filter(kong -> kong.withinRange(startingTileIndex, endingTileIndex))
-            .sorted()
-            .toList();
+    var matchedExposedMelds = new ExposedMelds(exposedMelds, mahjongSetType);
 
     // Count total tiles
     var allTiles = Arrays.stream(tiles, startingTileIndex, endingTileIndex + 1).sum();
-    if (allTiles == 0
-        && matchedExposedChows.size() + matchedExposedPongs.size() + matchedExposedKongs.size()
-            == 0) {
+    if (allTiles == 0 && matchedExposedMelds.isEmpty()) {
       return List.of(
           new Melds(
               mahjongSetType,
@@ -60,13 +42,7 @@ public class MeldsFactory {
     System.arraycopy(tiles, startingTileIndex, targetTiles, 1, mahjongSetSize);
 
     var meldsCandidates = new HashSet<Melds>();
-    addMeldsCandidates(
-        meldsCandidates,
-        mahjongSetType,
-        targetTiles,
-        matchedExposedChows,
-        matchedExposedPongs,
-        matchedExposedKongs);
+    addMeldsCandidates(meldsCandidates, mahjongSetType, targetTiles, matchedExposedMelds);
 
     return deduceBestMelds(meldsCandidates);
   }
@@ -75,41 +51,18 @@ public class MeldsFactory {
       Set<Melds> meldsCandidates,
       MahjongSetType mahjongSetType,
       int[] targetTiles,
-      List<MahjongTileType> exposedChows,
-      List<MahjongTileType> exposedPongs,
-      List<MahjongTileType> exposedKongs) {
+      ExposedMelds exposedMelds) {
     meldsCandidates.add(
-        constructMelds(
-            mahjongSetType,
-            targetTiles.clone(),
-            exposedChows,
-            exposedPongs,
-            exposedKongs,
-            List.of(),
-            false));
+        constructMelds(mahjongSetType, targetTiles.clone(), exposedMelds, List.of(), false));
     meldsCandidates.add(
-        constructMelds(
-            mahjongSetType,
-            targetTiles.clone(),
-            exposedChows,
-            exposedPongs,
-            exposedKongs,
-            List.of(),
-            true));
+        constructMelds(mahjongSetType, targetTiles.clone(), exposedMelds, List.of(), true));
 
     for (int i = 1; i < targetTiles.length; i++) {
       if (targetTiles[i] >= 2) {
         var adjustedTileCounts = targetTiles.clone();
         adjustedTileCounts[i] -= 2;
         meldsCandidates.add(
-            constructMelds(
-                mahjongSetType,
-                adjustedTileCounts,
-                exposedChows,
-                exposedPongs,
-                exposedKongs,
-                List.of(i, i),
-                true));
+            constructMelds(mahjongSetType, adjustedTileCounts, exposedMelds, List.of(i, i), true));
       }
     }
   }
@@ -117,14 +70,12 @@ public class MeldsFactory {
   private Melds constructMelds(
       MahjongSetType mahjongSetType,
       int[] tileCounts,
-      List<MahjongTileType> exposedChows,
-      List<MahjongTileType> exposedPongs,
-      List<MahjongTileType> exposedKongs,
+      ExposedMelds exposedMelds,
       List<Integer> reservedTiles,
       boolean checkChowFirst) {
     var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
-    var chows = new ArrayList<>(exposedChows);
-    var pongs = new ArrayList<>(exposedPongs);
+    var chows = new ArrayList<>(exposedMelds.getChows());
+    var pongs = new ArrayList<>(exposedMelds.getPongs());
     if (checkChowFirst) {
       chows.addAll(deduceChows(mahjongSetType, tileCounts, startingTileIndex));
       pongs.addAll(deducePongs(tileCounts, reservedTiles, startingTileIndex));
@@ -136,14 +87,7 @@ public class MeldsFactory {
     chows.sort(Comparator.comparingInt(MahjongTileType::getIndex));
     pongs.sort(Comparator.comparingInt(MahjongTileType::getIndex));
 
-    MahjongTileType eye = null;
-    for (var i = 1; i < tileCounts.length; i++) {
-      if (tileCounts[i] == 2) {
-        eye = MahjongTileType.valueOfIndex(startingTileIndex - 1 + i);
-        tileCounts[i] = 0;
-        break;
-      }
-    }
+    var eye = deduceEye(tileCounts, startingTileIndex);
     var unusedTileCount = 0;
     var unusedPairs = 0;
     for (var unusedTile : tileCounts) {
@@ -153,7 +97,14 @@ public class MeldsFactory {
       }
     }
     return new Melds(
-        mahjongSetType, chows, pongs, exposedKongs, eye, tileCounts, unusedTileCount, unusedPairs);
+        mahjongSetType,
+        chows,
+        pongs,
+        exposedMelds.getKongs(),
+        eye,
+        tileCounts,
+        unusedTileCount,
+        unusedPairs);
   }
 
   private List<Melds> deduceBestMelds(Set<Melds> meldsCandidates) {
@@ -233,5 +184,15 @@ public class MeldsFactory {
       }
     }
     return pongs;
+  }
+
+  private MahjongTileType deduceEye(int[] tileCounts, int startingTileIndex) {
+    for (var i = 1; i < tileCounts.length; i++) {
+      if (tileCounts[i] == 2) {
+        tileCounts[i] = 0;
+        return MahjongTileType.valueOfIndex(startingTileIndex - 1 + i);
+      }
+    }
+    return null;
   }
 }
