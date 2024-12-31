@@ -2,11 +2,13 @@ package com.oscarhkli.mahjong.score.api;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oscarhkli.mahjong.score.ExposedMelds;
 import com.oscarhkli.mahjong.score.MahjongTileType;
 import com.oscarhkli.mahjong.score.ScoreCalculator;
 import com.oscarhkli.mahjong.score.WinningHand;
@@ -39,45 +41,43 @@ class MahjongControllerTest {
   @MockitoBean ScoreCalculator scoreCalculator;
 
   @Captor ArgumentCaptor<List<MahjongTileType>> tilesCaptor;
-  @Captor ArgumentCaptor<List<MahjongTileType>> exposedChowsCaptor;
-  @Captor ArgumentCaptor<List<MahjongTileType>> exposedPongsCaptor;
-  @Captor ArgumentCaptor<List<MahjongTileType>> exposedKongsCaptor;
+  @Captor ArgumentCaptor<ExposedMelds> exposedMeldsCaptor;
 
   @Test
   @SneakyThrows
   void testDeduceWinningHand() {
     var fakeWinningHand =
         new WinningHand(List.of(WinningHandType.COMMON_HAND, WinningHandType.ALL_ONE_SUIT));
-    given(
-            scoreCalculator.calculate(
-                tilesCaptor.capture(),
-                exposedChowsCaptor.capture(),
-                exposedPongsCaptor.capture(),
-                exposedKongsCaptor.capture()))
+    given(scoreCalculator.calculate(tilesCaptor.capture(), exposedMeldsCaptor.capture()))
         .willReturn(fakeWinningHand);
 
+    var request =
+        WinningHandRequest.builder()
+            .handTiles(
+                List.of(
+                    MahjongTileType.D1,
+                    MahjongTileType.D1,
+                    MahjongTileType.D1,
+                    MahjongTileType.D2,
+                    MahjongTileType.D2,
+                    MahjongTileType.D2,
+                    MahjongTileType.D3,
+                    MahjongTileType.D3,
+                    MahjongTileType.D3,
+                    MahjongTileType.D4,
+                    MahjongTileType.D5,
+                    MahjongTileType.D6,
+                    MahjongTileType.D9,
+                    MahjongTileType.D9))
+            .build();
     final var response =
         mockMvc
             .perform(
-                get("/api/v1/mahjong/faans")
-                    .secure(true)
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .queryParam(
-                        "handTiles",
-                        "D1",
-                        "D1",
-                        "D1",
-                        "D2",
-                        "D2",
-                        "D2",
-                        "D3",
-                        "D3",
-                        "D3",
-                        "D4",
-                        "D5",
-                        "D6",
-                        "D9",
-                        "D9"))
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andDo(print())
             .andReturn()
@@ -122,32 +122,35 @@ class MahjongControllerTest {
             MahjongTileType.D6,
             MahjongTileType.D9,
             MahjongTileType.D9);
-    then(exposedChowsCaptor.getValue()).isEmpty();
-    then(exposedPongsCaptor.getValue()).isEmpty();
-    then(exposedKongsCaptor.getValue()).isEmpty();
+    then(exposedMeldsCaptor.getValue())
+        .extracting(ExposedMelds::getChows, ExposedMelds::getPongs, ExposedMelds::getKongs)
+        .containsExactly(List.of(), List.of(), List.of());
   }
 
   @Test
   @SneakyThrows
   void testDeduceWinningHandWithExposedTiles() {
     var fakeWinningHand = new WinningHand(List.of(WinningHandType.ALL_ONE_SUIT));
-    given(
-            scoreCalculator.calculate(
-                tilesCaptor.capture(),
-                exposedChowsCaptor.capture(),
-                exposedPongsCaptor.capture(),
-                exposedKongsCaptor.capture()))
+    given(scoreCalculator.calculate(tilesCaptor.capture(), exposedMeldsCaptor.capture()))
         .willReturn(fakeWinningHand);
 
+    var request =
+        WinningHandRequest.builder()
+            .handTiles(List.of(MahjongTileType.D9, MahjongTileType.D9))
+            .exposedMelds(
+                new ExposedMelds(
+                    List.of(MahjongTileType.D1, MahjongTileType.D3),
+                    List.of(MahjongTileType.D5, MahjongTileType.D6),
+                    List.of()))
+            .build();
     final var response =
         mockMvc
             .perform(
-                get("/api/v1/mahjong/faans")
-                    .secure(true)
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .queryParam("handTiles", "D9", "D9")
-                    .queryParam("exposedChows", "D1", "D3")
-                    .queryParam("exposedPongs", "D5", "D6"))
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andDo(print())
             .andReturn()
@@ -172,8 +175,11 @@ class MahjongControllerTest {
 
     then(winningHandResponse).usingRecursiveComparison().isEqualTo(expectedWinningResponse);
     then(tilesCaptor.getValue()).containsExactly(MahjongTileType.D9, MahjongTileType.D9);
-    then(exposedChowsCaptor.getValue()).containsExactly(MahjongTileType.D1, MahjongTileType.D3);
-    then(exposedPongsCaptor.getValue()).containsExactly(MahjongTileType.D5, MahjongTileType.D6);
-    then(exposedKongsCaptor.getValue()).isEmpty();
+    then(exposedMeldsCaptor.getValue())
+        .extracting(ExposedMelds::getChows, ExposedMelds::getPongs, ExposedMelds::getKongs)
+        .containsExactly(
+            List.of(MahjongTileType.D1, MahjongTileType.D3),
+            List.of(MahjongTileType.D5, MahjongTileType.D6),
+            List.of());
   }
 }

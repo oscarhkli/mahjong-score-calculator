@@ -1,15 +1,15 @@
 package com.oscarhkli.mahjong.score.api;
 
-import com.oscarhkli.mahjong.score.MahjongTileType;
+import com.oscarhkli.mahjong.score.ExposedMelds;
 import com.oscarhkli.mahjong.score.ScoreCalculator;
-import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -19,24 +19,22 @@ public class MahjongController {
 
   private final ScoreCalculator scoreCalculator;
 
-  @GetMapping(path = "/api/v1/mahjong/faans", produces = "application/json")
+  @PostMapping(
+      path = "/api/v1/mahjong/faans",
+      consumes = "application/json",
+      produces = "application/json")
   public ResponseEntity<WinningHandResponse> deduceWinningHand(
-      @RequestHeader HttpHeaders headers,
-      @RequestParam List<MahjongTileType> handTiles,
-      @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedChows,
-      @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedPongs,
-      @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedKongs) {
+      @RequestHeader HttpHeaders headers, @RequestBody WinningHandRequest request) {
     log.info(
-        "deduceWinningHand handTiles: {}, exposedChows: {}, exposedPongs: {}, exposedKongs: {} [referer: {}, user-agent: {}]",
-        handTiles,
-        exposedChows,
-        exposedPongs,
-        exposedKongs,
+        "deduceWinningHand request: {}, [referer: {}, user-agent: {}]",
+        request,
         headers.getOrEmpty(HttpHeaders.REFERER),
         headers.getOrEmpty(HttpHeaders.USER_AGENT));
     var winningHandResponse =
         WinningHandResponse.of(
-            this.scoreCalculator.calculate(handTiles, exposedChows, exposedPongs, exposedKongs));
+            this.scoreCalculator.calculate(
+                request.handTiles(),
+                Optional.ofNullable(request.exposedMelds()).orElseGet(ExposedMelds::new)));
     log.info(
         "Return WinningHandResponse with totalFaans: {}",
         winningHandResponse.getData().getTotalFaans());

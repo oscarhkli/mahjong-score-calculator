@@ -1,6 +1,7 @@
 package com.oscarhkli.mahjong.score.api;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,33 +27,28 @@ class MahjongApiComponentTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private JwtHelper jwtHelper;
 
+  private String generateToken() {
+    return jwtHelper.generateToken("MSC_USER", List.of("ROLE_USER"));
+  }
+
   @Test
   @SneakyThrows
-  void testDeduceWinningHand() {
-    var token = jwtHelper.generateToken("MSC_USER", List.of("ROLE_USER"));
+  void testDeduceWinningHandWithoutExposedTiles() {
+    var request =
+        """
+        {
+          "handTiles":["D1", "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D5", "D6", "D9", "D9"]
+        }""";
 
     var response =
         mockMvc
             .perform(
-                get("/api/v1/mahjong/faans")
-                    .header("Authorization", "Bearer " + token)
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .header("Authorization", "Bearer %s".formatted(generateToken()))
+                    .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .queryParam(
-                        "handTiles",
-                        "D1",
-                        "D1",
-                        "D1",
-                        "D2",
-                        "D2",
-                        "D2",
-                        "D3",
-                        "D3",
-                        "D3",
-                        "D4",
-                        "D5",
-                        "D6",
-                        "D9",
-                        "D9"))
+                    .content(request))
             .andExpect(status().isOk())
             .andDo(print())
             .andReturn()
@@ -70,6 +66,52 @@ class MahjongApiComponentTest {
                  "name": "Common Hand",
                  "faans": 1
                },
+               {
+                 "type": "ALL_ONE_SUIT",
+                 "name": "All One Suit",
+                 "faans": 7
+               }
+             ]
+           }
+         }""";
+
+    JSONAssert.assertEquals(expectedResponseJson, response, true);
+  }
+
+  @Test
+  @SneakyThrows
+  void testDeduceWinningHandWithExposedTiles() {
+    var request =
+        """
+        {
+          "handTiles":["D9","D9"],
+          "exposedMelds":{
+            "chows": ["D1","D3"],
+            "pongs": ["D5","D6"]
+          }
+        }""";
+
+    var response =
+        mockMvc
+            .perform(
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .header("Authorization", "Bearer %s".formatted(generateToken()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(request))
+            .andExpect(status().isOk())
+            .andDo(print())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    var expectedResponseJson =
+        """
+        {
+           "data": {
+             "totalFaans": 7,
+             "winningHands": [
                {
                  "type": "ALL_ONE_SUIT",
                  "name": "All One Suit",

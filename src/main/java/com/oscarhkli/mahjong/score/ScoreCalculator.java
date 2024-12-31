@@ -19,11 +19,12 @@ public class ScoreCalculator {
 
   public WinningHand calculate(
       List<MahjongTileType> tiles,
-      List<MahjongTileType> exposedChows,
-      List<MahjongTileType> exposedPongs,
-      List<MahjongTileType> exposedKongs) {
+      ExposedMelds exposedMelds
+  ) {
+    log.info("Calculating winning hand");
     return new WinningHand(
-        calculateWinningHands(tiles, new ExposedMelds(exposedChows, exposedPongs, exposedKongs)));
+        calculateWinningHands(tiles, exposedMelds)
+    );
   }
 
   int[] constructMahjongTiles(List<MahjongTileType> tiles) {
