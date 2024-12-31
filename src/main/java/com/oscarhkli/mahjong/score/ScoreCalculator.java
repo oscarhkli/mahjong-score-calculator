@@ -19,7 +19,7 @@ public class ScoreCalculator {
 
   public WinningHand calculate(
       List<MahjongTileType> tiles,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs) {
     return new WinningHand(calculateWinningHands(tiles, exposedChows, exposedPongs, exposedKongs));
@@ -47,7 +47,7 @@ public class ScoreCalculator {
 
   List<WinningHandType> calculateWinningHands(
       List<MahjongTileType> tiles,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs) {
     var mahjongTiles = constructMahjongTiles(tiles);
@@ -138,7 +138,7 @@ public class ScoreCalculator {
 
   private boolean isNineGate(
       int[] mahjongTiles,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs) {
     if (exposedChows.size() + exposedPongs.size() + exposedKongs.size() > 0) {

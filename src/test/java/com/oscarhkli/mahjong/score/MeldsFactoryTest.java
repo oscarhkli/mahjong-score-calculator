@@ -16,7 +16,7 @@ class MeldsFactoryTest {
   void constructMelds(
       MahjongSetType mahjongSetType,
       List<MahjongTileType> mahjongTileTypes,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs,
       List<Melds> expected) {
@@ -44,7 +44,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
+                    List.of(MahjongTileType.D1),
                     List.of(),
                     List.of(),
                     null,
@@ -65,7 +65,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
+                    List.of(MahjongTileType.D1),
                     List.of(),
                     List.of(),
                     null,
@@ -96,10 +96,10 @@ class MeldsFactoryTest {
                 new Melds(
                     MahjongSetType.DOT,
                     List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
+                        MahjongTileType.D1,
+                        MahjongTileType.D1,
+                        MahjongTileType.D2,
+                        MahjongTileType.D3),
                     List.of(),
                     List.of(),
                     MahjongTileType.D5,
@@ -128,10 +128,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+                    List.of(MahjongTileType.D1, MahjongTileType.D1, MahjongTileType.D2),
                     List.of(MahjongTileType.D5),
                     List.of(),
                     null,
@@ -155,9 +152,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
+                    List.of(MahjongTileType.D1, MahjongTileType.D3),
                     List.of(),
                     List.of(),
                     MahjongTileType.D2,
@@ -182,9 +177,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
+                    List.of(MahjongTileType.D1, MahjongTileType.D3),
                     List.of(),
                     List.of(),
                     MahjongTileType.D2,
@@ -211,9 +204,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
+                    List.of(MahjongTileType.D1, MahjongTileType.D3),
                     List.of(MahjongTileType.D5),
                     List.of(),
                     MahjongTileType.D2,
@@ -244,10 +235,10 @@ class MeldsFactoryTest {
                 new Melds(
                     MahjongSetType.DOT,
                     List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+                        MahjongTileType.D1,
+                        MahjongTileType.D1,
+                        MahjongTileType.D2,
+                        MahjongTileType.D2),
                     List.of(),
                     List.of(),
                     MahjongTileType.D5,
@@ -257,10 +248,10 @@ class MeldsFactoryTest {
                 new Melds(
                     MahjongSetType.DOT,
                     List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5),
-                        List.of(MahjongTileType.D3, MahjongTileType.D4, MahjongTileType.D5)),
+                        MahjongTileType.D1,
+                        MahjongTileType.D1,
+                        MahjongTileType.D3,
+                        MahjongTileType.D3),
                     List.of(),
                     List.of(),
                     MahjongTileType.D2,
@@ -342,15 +333,13 @@ class MeldsFactoryTest {
         Arguments.of(
             MahjongSetType.DOT,
             List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4),
-            List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
+            List.of(MahjongTileType.D1),
             List.of(),
             List.of(),
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+                    List.of(MahjongTileType.D1, MahjongTileType.D2),
                     List.of(),
                     List.of(),
                     null,
@@ -382,7 +371,7 @@ class MeldsFactoryTest {
             List.of(
                 new Melds(
                     MahjongSetType.BAMBOO,
-                    List.of(List.of(MahjongTileType.B2, MahjongTileType.B3, MahjongTileType.B4)),
+                    List.of(MahjongTileType.B2),
                     List.of(),
                     List.of(MahjongTileType.B1),
                     null,
@@ -392,15 +381,13 @@ class MeldsFactoryTest {
         Arguments.of(
             MahjongSetType.DOT,
             List.of(MahjongTileType.D7, MahjongTileType.D8, MahjongTileType.D9),
-            List.of(List.of(MahjongTileType.D4, MahjongTileType.D5, MahjongTileType.D6)),
+            List.of(MahjongTileType.D4),
             List.of(),
             List.of(),
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(
-                        List.of(MahjongTileType.D4, MahjongTileType.D5, MahjongTileType.D6),
-                        List.of(MahjongTileType.D7, MahjongTileType.D8, MahjongTileType.D9)),
+                    List.of(MahjongTileType.D4, MahjongTileType.D7),
                     List.of(),
                     List.of(),
                     null,
@@ -410,13 +397,13 @@ class MeldsFactoryTest {
         Arguments.of(
             MahjongSetType.CHARACTER,
             List.of(),
-            List.of(List.of(MahjongTileType.C1, MahjongTileType.C2, MahjongTileType.C3)),
+            List.of(MahjongTileType.C1),
             List.of(MahjongTileType.C4),
             List.of(MahjongTileType.C5),
             List.of(
                 new Melds(
                     MahjongSetType.CHARACTER,
-                    List.of(List.of(MahjongTileType.C1, MahjongTileType.C2, MahjongTileType.C3)),
+                    List.of(MahjongTileType.C1),
                     List.of(MahjongTileType.C4),
                     List.of(MahjongTileType.C5),
                     null,
@@ -426,13 +413,13 @@ class MeldsFactoryTest {
         Arguments.of(
             MahjongSetType.BAMBOO,
             List.of(MahjongTileType.B7),
-            List.of(List.of(MahjongTileType.B1, MahjongTileType.B2, MahjongTileType.B3)),
+            List.of(MahjongTileType.B1),
             List.of(MahjongTileType.B4),
             List.of(MahjongTileType.B5),
             List.of(
                 new Melds(
                     MahjongSetType.BAMBOO,
-                    List.of(List.of(MahjongTileType.B1, MahjongTileType.B2, MahjongTileType.B3)),
+                    List.of(MahjongTileType.B1),
                     List.of(MahjongTileType.B4),
                     List.of(MahjongTileType.B5),
                     null,
@@ -474,13 +461,13 @@ class MeldsFactoryTest {
         Arguments.of(
             MahjongSetType.DOT,
             List.of(MahjongTileType.D3),
-            List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
+            List.of(MahjongTileType.D1),
             List.of(),
             List.of(MahjongTileType.D4),
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
+                    List.of(MahjongTileType.D1),
                     List.of(),
                     List.of(MahjongTileType.D4),
                     null,
@@ -490,15 +477,13 @@ class MeldsFactoryTest {
         Arguments.of(
             MahjongSetType.DOT,
             List.of(),
-            List.of(
-                List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                List.of(MahjongTileType.B4, MahjongTileType.B5, MahjongTileType.B6)),
+            List.of(MahjongTileType.D1, MahjongTileType.B4),
             List.of(MahjongTileType.B1),
             List.of(MahjongTileType.WEST),
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3)),
+                    List.of(MahjongTileType.D1),
                     List.of(),
                     List.of(),
                     null,
@@ -507,14 +492,14 @@ class MeldsFactoryTest {
                     0))),
         Arguments.of(
             MahjongSetType.DOT,
-            List.of(MahjongTileType.D5, MahjongTileType.D6, MahjongTileType.D7),
             List.of(),
+            List.of(MahjongTileType.D5),
             List.of(MahjongTileType.D8),
             List.of(MahjongTileType.D9),
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
-                    List.of(List.of(MahjongTileType.D5, MahjongTileType.D6, MahjongTileType.D7)),
+                    List.of(MahjongTileType.D5),
                     List.of(MahjongTileType.D8),
                     List.of(MahjongTileType.D9),
                     null,
@@ -535,17 +520,17 @@ class MeldsFactoryTest {
                 MahjongTileType.D4,
                 MahjongTileType.D5,
                 MahjongTileType.D5),
-            List.of(List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+            List.of(MahjongTileType.D2),
             List.of(),
             List.of(),
             List.of(
                 new Melds(
                     MahjongSetType.DOT,
                     List.of(
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D1, MahjongTileType.D2, MahjongTileType.D3),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4),
-                        List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+                        MahjongTileType.D1,
+                        MahjongTileType.D1,
+                        MahjongTileType.D2,
+                        MahjongTileType.D2),
                     List.of(),
                     List.of(),
                     MahjongTileType.D5,

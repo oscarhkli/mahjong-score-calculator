@@ -23,7 +23,7 @@ public class MahjongController {
   public ResponseEntity<WinningHandResponse> deduceWinningHand(
       @RequestHeader HttpHeaders headers,
       @RequestParam List<MahjongTileType> handTiles,
-      @RequestParam(required = false, defaultValue = "") List<List<MahjongTileType>> exposedChows,
+      @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedChows,
       @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedPongs,
       @RequestParam(required = false, defaultValue = "") List<MahjongTileType> exposedKongs) {
     log.info(

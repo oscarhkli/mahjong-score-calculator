@@ -47,7 +47,7 @@ class ScoreCalculatorTest {
   @MethodSource
   void deduceWinningHands(
       List<String> tileStrings,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs,
       List<WinningHandType> expected) {
@@ -164,7 +164,7 @@ class ScoreCalculatorTest {
             List.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ALL_ONE_SUIT)),
         Arguments.of(
             List.of("B1", "B1", "B2", "B2", "B3", "B3", "B8", "B8", "B9", "B9", "B9"),
-            List.of(List.of(MahjongTileType.B1, MahjongTileType.B2, MahjongTileType.B3)),
+            List.of(MahjongTileType.B1),
             List.of(),
             List.of(),
             List.of(WinningHandType.ALL_ONE_SUIT)),
@@ -192,7 +192,7 @@ class ScoreCalculatorTest {
             List.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of("B1", "B1", "B2", "B2", "B3", "B3", "B9", "B9", "B9", "WEST", "WEST"),
-            List.of(List.of(MahjongTileType.B1, MahjongTileType.B2, MahjongTileType.B3)),
+            List.of(MahjongTileType.B1),
             List.of(),
             List.of(),
             List.of(WinningHandType.MIXED_ONE_SUIT)),
@@ -502,7 +502,7 @@ class ScoreCalculatorTest {
             List.of(WinningHandType.NINE_GATES)),
         Arguments.of(
             List.of("D5", "D6", "D7", "D8", "D9", "D9", "D9", "D9"),
-            List.of(List.of(MahjongTileType.D2, MahjongTileType.D3, MahjongTileType.D4)),
+            List.of(MahjongTileType.D2),
             List.of(MahjongTileType.D1),
             List.of(),
             List.of(WinningHandType.TRICK_HAND)),

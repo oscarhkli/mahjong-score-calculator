@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 public class Melds {
 
   MahjongSetType mahjongSetType;
-  List<List<MahjongTileType>> chows;
+  List<MahjongTileType> chows;
   List<MahjongTileType> pongs;
   List<MahjongTileType> kongs;
   MahjongTileType eye;

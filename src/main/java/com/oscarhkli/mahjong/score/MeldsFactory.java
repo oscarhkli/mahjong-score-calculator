@@ -18,7 +18,7 @@ public class MeldsFactory {
   public List<Melds> construct(
       MahjongSetType mahjongSetType,
       int[] tiles,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs) {
     var startingTileIndex = mahjongSetType.getStartingTile().getIndex();
@@ -27,7 +27,7 @@ public class MeldsFactory {
 
     var matchedExposedChows =
         exposedChows.stream()
-            .filter(chows -> chows.getFirst().withinRange(startingTileIndex, endingTileIndex))
+            .filter(chows -> chows.withinRange(startingTileIndex, endingTileIndex))
             .toList();
     var matchedExposedPongs =
         exposedPongs.stream()
@@ -75,7 +75,7 @@ public class MeldsFactory {
       Set<Melds> meldsCandidates,
       MahjongSetType mahjongSetType,
       int[] targetTiles,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs) {
     meldsCandidates.add(
@@ -117,7 +117,7 @@ public class MeldsFactory {
   private Melds constructMelds(
       MahjongSetType mahjongSetType,
       int[] tileCounts,
-      List<List<MahjongTileType>> exposedChows,
+      List<MahjongTileType> exposedChows,
       List<MahjongTileType> exposedPongs,
       List<MahjongTileType> exposedKongs,
       List<Integer> reservedTiles,
@@ -133,7 +133,7 @@ public class MeldsFactory {
       chows.addAll(deduceChows(mahjongSetType, tileCounts, startingTileIndex));
     }
 
-    chows.sort(Comparator.comparingInt(mahjongTileTypes -> mahjongTileTypes.getFirst().getIndex()));
+    chows.sort(Comparator.comparingInt(MahjongTileType::getIndex));
     pongs.sort(Comparator.comparingInt(MahjongTileType::getIndex));
 
     MahjongTileType eye = null;
@@ -194,20 +194,16 @@ public class MeldsFactory {
    * @param startingTileIndex Start index of current Mahjong Set Type
    * @return List of deduced Chows
    */
-  private List<List<MahjongTileType>> deduceChows(
+  private List<MahjongTileType> deduceChows(
       MahjongSetType mahjongSetType, int[] tileCounts, int startingTileIndex) {
     if (!MahjongConstant.SUITED.equals(mahjongSetType.getFamily())) {
       return List.of();
     }
 
-    var chows = new ArrayList<List<MahjongTileType>>();
+    var chows = new ArrayList<MahjongTileType>();
     for (int i = 1; i < tileCounts.length - 2; i++) {
       while (tileCounts[i] > 0 && tileCounts[i + 1] > 0 && tileCounts[i + 2] > 0) {
-        chows.add(
-            Arrays.asList(
-                MahjongTileType.valueOfIndex(startingTileIndex - 1 + i),
-                MahjongTileType.valueOfIndex(startingTileIndex - 1 + i + 1),
-                MahjongTileType.valueOfIndex(startingTileIndex - 1 + i + 2)));
+        chows.add(MahjongTileType.valueOfIndex(startingTileIndex - 1 + i));
         tileCounts[i]--;
         tileCounts[i + 1]--;
         tileCounts[i + 2]--;
