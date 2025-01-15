@@ -2,6 +2,11 @@ package com.oscarhkli.mahjong.score;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Map;
@@ -13,12 +18,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.InjectMocks;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(SoftAssertionsExtension.class)
+@ExtendWith(MockitoExtension.class)
 @Slf4j
 class ScoreCalculatorTest {
 
-  ScoreCalculator scoreCalculator = new ScoreCalculator(new MeldsFactory());
+  @Spy MeldsFactory meldsFactory;
+  @InjectMocks @Spy ScoreCalculator scoreCalculator;
 
   @ParameterizedTest
   @MethodSource
@@ -52,9 +62,21 @@ class ScoreCalculatorTest {
       List<MahjongTileType> exposedKongs,
       List<WinningHandType> expected) {
     var tiles = tileStrings.stream().map(MahjongTileType::valueOf).toList();
+    lenient()
+        .doReturn(List.of())
+        .when(scoreCalculator)
+        .calculateBonusWinningConditions(
+            any(Melds.class),
+            any(Melds.class),
+            anyList(),
+            any(WindType.class),
+            any(ExposedMelds.class));
     var winningHandTypes =
         scoreCalculator.calculateWinningHands(
-            tiles, new ExposedMelds(exposedChows, exposedPongs, exposedKongs));
+            tiles,
+            new ExposedMelds(exposedChows, exposedPongs, exposedKongs),
+            List.of(),
+            new WindType(null, null));
     then(winningHandTypes)
         .as("tiles: %s".formatted(tileStrings))
         .containsExactlyInAnyOrderElementsOf(expected);
@@ -128,7 +150,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ONE_DRAGON)),
+            List.of(WinningHandType.ALL_IN_TRIPLETS)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "C2", "C2", "C2", "D3", "D4", "D5", "D7", "D7", "D7", "B9", "B9"),
@@ -310,9 +332,7 @@ class ScoreCalculatorTest {
             List.of(
                 WinningHandType.SMALL_DRAGON,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.ALL_IN_TRIPLETS)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D2", "D3",
@@ -320,11 +340,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of(
-                WinningHandType.SMALL_DRAGON,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+            List.of(WinningHandType.SMALL_DRAGON, WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "D1", "D2", "D3",
@@ -332,10 +348,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of(
-                WinningHandType.SMALL_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+            List.of(WinningHandType.SMALL_DRAGON)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "GREEN", "D1",
@@ -346,10 +359,7 @@ class ScoreCalculatorTest {
             List.of(
                 WinningHandType.GREAT_DRAGON,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "GREEN", "D1",
@@ -357,12 +367,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of(
-                WinningHandType.GREAT_DRAGON,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+            List.of(WinningHandType.GREAT_DRAGON, WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
                 "RED", "RED", "RED", "WHITE", "WHITE", "WHITE", "GREEN", "GREEN", "GREEN", "D2",
@@ -381,10 +386,7 @@ class ScoreCalculatorTest {
             List.of(
                 WinningHandType.GREAT_DRAGON,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.ALL_IN_TRIPLETS)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "D9", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
@@ -395,20 +397,17 @@ class ScoreCalculatorTest {
             List.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
-                "D9", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
-                "SOUTH", "SOUTH"),
+                "D9", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH", "SOUTH"),
             List.of(),
             List.of(),
             List.of(MahjongTileType.D1),
             List.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
@@ -419,8 +418,7 @@ class ScoreCalculatorTest {
             List.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
                 "WHITE", "WHITE", "WHITE", "D9", "D9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
@@ -431,9 +429,7 @@ class ScoreCalculatorTest {
             List.of(
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.MIXED_ONE_SUIT)),
         Arguments.of(
             List.of(
                 "WHITE", "WHITE", "WHITE", "D9", "D9", "GREEN", "GREEN", "GREEN", "RED", "RED",
@@ -445,10 +441,7 @@ class ScoreCalculatorTest {
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.GREAT_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.GREAT_DRAGON)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "C9", "C9", "EAST", "EAST", "EAST", "RED", "RED", "RED", "SOUTH",
@@ -456,10 +449,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of(
-                WinningHandType.MIXED_ORPHANS,
-                WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.ONE_DRAGON)),
+            List.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS)),
         Arguments.of(
             List.of(
                 "WHITE", "WHITE", "D9", "D9", "D9", "GREEN", "GREEN", "GREEN", "RED", "RED", "RED",
@@ -471,9 +461,7 @@ class ScoreCalculatorTest {
                 WinningHandType.MIXED_ORPHANS,
                 WinningHandType.ALL_IN_TRIPLETS,
                 WinningHandType.MIXED_ONE_SUIT,
-                WinningHandType.SMALL_DRAGON,
-                WinningHandType.ONE_DRAGON,
-                WinningHandType.ONE_DRAGON)),
+                WinningHandType.SMALL_DRAGON)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "B9", "B9", "B9", "EAST", "EAST", "EAST", "RED", "RED", "RED",
@@ -481,10 +469,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(),
             List.of(),
-            List.of(
-                WinningHandType.MIXED_ORPHANS,
-                WinningHandType.ALL_IN_TRIPLETS,
-                WinningHandType.ONE_DRAGON)),
+            List.of(WinningHandType.MIXED_ORPHANS, WinningHandType.ALL_IN_TRIPLETS)),
         Arguments.of(
             List.of(
                 "D1", "D1", "D1", "B9", "B9", "B9", "D9", "D9", "D9", "C1", "C1", "C1", "C9", "C9"),
@@ -493,8 +478,7 @@ class ScoreCalculatorTest {
             List.of(),
             List.of(WinningHandType.ORPHANS)),
         Arguments.of(
-            List.of(
-                "D1", "D1", "D1", "B9", "B9", "B9", "D9", "D9", "D9", "C9", "C9"),
+            List.of("D1", "D1", "D1", "B9", "B9", "B9", "D9", "D9", "D9", "C9", "C9"),
             List.of(),
             List.of(),
             List.of(MahjongTileType.C1),
@@ -653,5 +637,181 @@ class ScoreCalculatorTest {
                 34, 1,
                 35, 1,
                 38, 1)));
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void calculateBonusWinningConditions(
+      List<MahjongTileType> windPongs,
+      List<MahjongTileType> windKongs,
+      List<MahjongTileType> dragonPongs,
+      List<MahjongTileType> dragonKongs,
+      List<MahjongTileType> bonusTiles,
+      WindType windSettings,
+      boolean hasExposedMelds,
+      List<WinningHandType> expected) {
+    var windMelds =
+        new Melds(MahjongSetType.WIND, List.of(), windPongs, windKongs, null, new int[4], 0, 0);
+    var dragonMelds =
+        new Melds(MahjongSetType.WIND, List.of(), dragonPongs, dragonKongs, null, new int[4], 0, 0);
+    var exposedMelds = mock(ExposedMelds.class);
+    given(exposedMelds.isEmpty()).willReturn(hasExposedMelds);
+    var winningHandTypes =
+        scoreCalculator.calculateBonusWinningConditions(
+            windMelds, dragonMelds, bonusTiles, windSettings, exposedMelds);
+    then(winningHandTypes).containsExactlyInAnyOrderElementsOf(expected);
+  }
+
+  private static Stream<Arguments> calculateBonusWinningConditions() {
+    return Stream.of(
+        Arguments.of(
+            List.of(MahjongTileType.EAST),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            new WindType(MahjongTileType.EAST, MahjongTileType.SOUTH),
+            true,
+            List.of(WinningHandType.PREVAILING_WIND, WinningHandType.WIN_FROM_WALL, WinningHandType.NO_FLOWERS)),
+        Arguments.of(
+            List.of(MahjongTileType.SOUTH),
+            List.of(MahjongTileType.WEST),
+            List.of(),
+            List.of(),
+            List.of(),
+            new WindType(MahjongTileType.WEST, MahjongTileType.SOUTH),
+            false,
+            List.of(WinningHandType.PREVAILING_WIND, WinningHandType.SEAT_WIND, WinningHandType.NO_FLOWERS)),
+        Arguments.of(
+            List.of(MahjongTileType.NORTH),
+            List.of(MahjongTileType.WEST),
+            List.of(),
+            List.of(),
+            List.of(),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.PREVAILING_WIND, WinningHandType.SEAT_WIND, WinningHandType.NO_FLOWERS)),
+        Arguments.of(
+            List.of(MahjongTileType.NORTH),
+            List.of(MahjongTileType.WEST),
+            List.of(MahjongTileType.RED),
+            List.of(),
+            List.of(),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(
+                WinningHandType.PREVAILING_WIND,
+                WinningHandType.SEAT_WIND,
+                WinningHandType.ONE_DRAGON, WinningHandType.NO_FLOWERS)),
+        Arguments.of(
+            List.of(MahjongTileType.NORTH),
+            List.of(MahjongTileType.WEST),
+            List.of(MahjongTileType.RED),
+            List.of(MahjongTileType.WHITE),
+            List.of(),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(
+                WinningHandType.PREVAILING_WIND,
+                WinningHandType.SEAT_WIND,
+                WinningHandType.ONE_DRAGON,
+                WinningHandType.ONE_DRAGON, WinningHandType.NO_FLOWERS)),
+        Arguments.of(
+            List.of(MahjongTileType.NORTH),
+            List.of(MahjongTileType.WEST),
+            List.of(MahjongTileType.RED, MahjongTileType.GREEN),
+            List.of(MahjongTileType.WHITE),
+            List.of(),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(
+                WinningHandType.PREVAILING_WIND,
+                WinningHandType.SEAT_WIND,
+                WinningHandType.ONE_DRAGON,
+                WinningHandType.ONE_DRAGON,
+                WinningHandType.ONE_DRAGON, WinningHandType.NO_FLOWERS)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(
+                MahjongTileType.F1,
+                MahjongTileType.F2,
+                MahjongTileType.F3,
+                MahjongTileType.F4,
+                MahjongTileType.S1,
+                MahjongTileType.S2,
+                MahjongTileType.S3,
+                MahjongTileType.S4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.GREAT_FLOWERS)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(
+                MahjongTileType.F1,
+                MahjongTileType.F2,
+                MahjongTileType.F3,
+                MahjongTileType.F4,
+                MahjongTileType.S1,
+                MahjongTileType.S2,
+                MahjongTileType.S4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.FLOWER_HANDS)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(MahjongTileType.F1, MahjongTileType.F2, MahjongTileType.F3, MahjongTileType.F4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.ALL_FLOWERS)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(MahjongTileType.S1, MahjongTileType.S2, MahjongTileType.S3, MahjongTileType.S4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.ALL_FLOWERS)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(
+                MahjongTileType.F4,
+                MahjongTileType.S1,
+                MahjongTileType.S2,
+                MahjongTileType.S3,
+                MahjongTileType.S4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.ALL_FLOWERS, WinningHandType.FLOWER_OF_OWN_WIND)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(MahjongTileType.F4, MahjongTileType.S1, MahjongTileType.S4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.NORTH),
+            false,
+            List.of(WinningHandType.FLOWER_OF_OWN_WIND, WinningHandType.FLOWER_OF_OWN_WIND)),
+        Arguments.of(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(MahjongTileType.F4, MahjongTileType.S1, MahjongTileType.S4),
+            new WindType(MahjongTileType.NORTH, MahjongTileType.EAST),
+            false,
+            List.of(WinningHandType.FLOWER_OF_OWN_WIND)));
   }
 }

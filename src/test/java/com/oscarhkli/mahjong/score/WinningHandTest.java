@@ -24,7 +24,7 @@ class WinningHandTest {
         Arguments.of(List.of(WinningHandType.CHICKEN_HAND, WinningHandType.ALL_ONE_SUIT), 7),
         Arguments.of(List.of(WinningHandType.COMMON_HAND, WinningHandType.ALL_ONE_SUIT), 8),
         Arguments.of(List.of(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.ALL_ONE_SUIT), 10),
-        Arguments.of(List.of(WinningHandType.ALL_HONOR_TILES, WinningHandType.ALL_ONE_SUIT), 10),
+        Arguments.of(List.of(WinningHandType.ALL_HONOR_TILES), 10),
         Arguments.of(
             List.of(
                 WinningHandType.SMALL_WINDS,

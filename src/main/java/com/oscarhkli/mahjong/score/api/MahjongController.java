@@ -34,7 +34,9 @@ public class MahjongController {
         WinningHandResponse.of(
             this.scoreCalculator.calculate(
                 request.handTiles(),
-                Optional.ofNullable(request.exposedMelds()).orElseGet(ExposedMelds::new)));
+                Optional.ofNullable(request.exposedMelds()).orElseGet(ExposedMelds::new),
+                request.bonusTiles(),
+                request.wind()));
     log.info(
         "Return WinningHandResponse with totalFaans: {}",
         winningHandResponse.getData().getTotalFaans());

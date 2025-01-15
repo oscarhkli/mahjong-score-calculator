@@ -37,7 +37,78 @@ class MahjongApiComponentTest {
     var request =
         """
         {
-          "handTiles":["D1", "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D5", "D6", "D9", "D9"]
+          "handTiles":["D1", "D1", "D1", "D2", "D2", "D2", "D3", "D3", "D3", "D4", "D5", "D6", "D9", "D9"],
+          "bonusTiles": [],
+          "wind": {
+            "prevailing": "EAST",
+            "seat": "WEST"
+          }
+        }""";
+
+    var response =
+        mockMvc
+            .perform(
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .header("Authorization", "Bearer %s".formatted(generateToken()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(request))
+            .andExpect(status().isOk())
+            .andDo(print())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    var expectedResponseJson =
+        """
+        {
+           "data": {
+             "totalFaans": 10,
+             "winningHands": [
+               {
+                 "type": "COMMON_HAND",
+                 "name": "Common Hand",
+                 "faans": 1
+               },
+               {
+                 "type": "ALL_ONE_SUIT",
+                 "name": "All One Suit",
+                 "faans": 7
+               },
+               {
+                 "type": "WIN_FROM_WALL",
+                 "name": "Win From Wall",
+                 "faans": 1
+               },
+               {
+                 "type": "NO_FLOWERS",
+                 "name": "No Flowers/Seasons",
+                 "faans": 1
+               }
+             ]
+           }
+         }""";
+
+    JSONAssert.assertEquals(expectedResponseJson, response, true);
+  }
+
+  @Test
+  @SneakyThrows
+  void testDeduceWinningHandWithExposedTiles() {
+    var request =
+        """
+        {
+          "handTiles":["D9","D9"],
+          "exposedMelds":{
+            "chows": ["D1","D3"],
+            "pongs": ["D5","D6"]
+          },
+          "bonusTiles":[],
+          "wind": {
+            "prevailing": "EAST",
+            "seat": "WEST"
+          }
         }""";
 
     var response =
@@ -62,14 +133,14 @@ class MahjongApiComponentTest {
              "totalFaans": 8,
              "winningHands": [
                {
-                 "type": "COMMON_HAND",
-                 "name": "Common Hand",
-                 "faans": 1
-               },
-               {
                  "type": "ALL_ONE_SUIT",
                  "name": "All One Suit",
                  "faans": 7
+               },
+               {
+                "type": "NO_FLOWERS",
+                "name": "No Flowers/Seasons",
+                "faans": 1
                }
              ]
            }
@@ -80,7 +151,7 @@ class MahjongApiComponentTest {
 
   @Test
   @SneakyThrows
-  void testDeduceWinningHandWithExposedTiles() {
+  void testDeduceWinningHandWithExposedTilesAndBonusTiles() {
     var request =
         """
         {
@@ -88,6 +159,11 @@ class MahjongApiComponentTest {
           "exposedMelds":{
             "chows": ["D1","D3"],
             "pongs": ["D5","D6"]
+          },
+          "bonusTiles":["F1","F2","F3","F4","S1","S2","S3"],
+          "wind": {
+            "prevailing": "EAST",
+            "seat": "WEST"
           }
         }""";
 
@@ -110,12 +186,17 @@ class MahjongApiComponentTest {
         """
         {
            "data": {
-             "totalFaans": 7,
+             "totalFaans": 10,
              "winningHands": [
                {
                  "type": "ALL_ONE_SUIT",
                  "name": "All One Suit",
                  "faans": 7
+               },
+               {
+                "type": "FLOWER_HANDS",
+                "name": "Flower Hands",
+                "faans": 3
                }
              ]
            }
@@ -123,4 +204,107 @@ class MahjongApiComponentTest {
 
     JSONAssert.assertEquals(expectedResponseJson, response, true);
   }
+
+  @Test
+  @SneakyThrows
+  void testDeduceSpecialWinningHand() {
+    var request =
+        """
+        {
+          "handTiles":["D1","D1","D1","D2","D3","D4","D5","D6","D7","D8","D9","D9","D9","D9"],
+          "exposedMelds":{
+            "chows": [],
+            "pongs": []
+          },
+          "bonusTiles":["F1","F2","F3","F4","S1","S2","S3"],
+          "wind": {
+            "prevailing": "EAST",
+            "seat": "WEST"
+          }
+        }""";
+
+    var response =
+        mockMvc
+            .perform(
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .header("Authorization", "Bearer %s".formatted(generateToken()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(request))
+            .andExpect(status().isOk())
+            .andDo(print())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    var expectedResponseJson =
+        """
+        {
+           "data": {
+             "totalFaans": 10,
+             "winningHands": [
+               {
+                 "type": "NINE_GATES",
+                 "name": "Nine Gates",
+                 "faans": 10
+               }
+             ]
+           }
+         }""";
+
+    JSONAssert.assertEquals(expectedResponseJson, response, true);
+  }
+
+  @Test
+  @SneakyThrows
+  void testDeduceWinningHandByBonusTiles() {
+    var request =
+        """
+        {
+          "handTiles":["D7","D8","B5","B6","C1","C2","C3","C4","C5","WEST","EAST","RED","GREEN","GREEN"],
+          "exposedMelds":{
+            "chows": [],
+            "pongs": []
+          },
+          "bonusTiles":["F1","F2","F3","F4","S1","S2","S3"],
+          "wind": {
+            "prevailing": "EAST",
+            "seat": "WEST"
+          }
+        }""";
+
+    var response =
+        mockMvc
+            .perform(
+                post("/api/v1/mahjong/faans")
+                    .with(csrf())
+                    .header("Authorization", "Bearer %s".formatted(generateToken()))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .content(request))
+            .andExpect(status().isOk())
+            .andDo(print())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    var expectedResponseJson =
+        """
+        {
+           "data": {
+             "totalFaans": 3,
+             "winningHands": [
+               {
+                "type": "FLOWER_HANDS",
+                "name": "Flower Hands",
+                "faans": 3
+               }
+             ]
+           }
+         }""";
+
+    JSONAssert.assertEquals(expectedResponseJson, response, true);
+  }
+
 }

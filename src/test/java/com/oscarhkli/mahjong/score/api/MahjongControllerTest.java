@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oscarhkli.mahjong.score.ExposedMelds;
 import com.oscarhkli.mahjong.score.MahjongTileType;
 import com.oscarhkli.mahjong.score.ScoreCalculator;
+import com.oscarhkli.mahjong.score.WindType;
 import com.oscarhkli.mahjong.score.WinningHand;
 import com.oscarhkli.mahjong.score.WinningHandType;
 import com.oscarhkli.mahjong.score.api.WinningHandResponse.BreakDown;
@@ -42,13 +43,20 @@ class MahjongControllerTest {
 
   @Captor ArgumentCaptor<List<MahjongTileType>> tilesCaptor;
   @Captor ArgumentCaptor<ExposedMelds> exposedMeldsCaptor;
+  @Captor ArgumentCaptor<List<MahjongTileType>> winningHandCaptor;
+  @Captor ArgumentCaptor<WindType> windSettingsCaptor;
 
   @Test
   @SneakyThrows
   void testDeduceWinningHand() {
     var fakeWinningHand =
         new WinningHand(List.of(WinningHandType.COMMON_HAND, WinningHandType.ALL_ONE_SUIT));
-    given(scoreCalculator.calculate(tilesCaptor.capture(), exposedMeldsCaptor.capture()))
+    given(
+            scoreCalculator.calculate(
+                tilesCaptor.capture(),
+                exposedMeldsCaptor.capture(),
+                winningHandCaptor.capture(),
+                windSettingsCaptor.capture()))
         .willReturn(fakeWinningHand);
 
     var request =
@@ -131,7 +139,12 @@ class MahjongControllerTest {
   @SneakyThrows
   void testDeduceWinningHandWithExposedTiles() {
     var fakeWinningHand = new WinningHand(List.of(WinningHandType.ALL_ONE_SUIT));
-    given(scoreCalculator.calculate(tilesCaptor.capture(), exposedMeldsCaptor.capture()))
+    given(
+            scoreCalculator.calculate(
+                tilesCaptor.capture(),
+                exposedMeldsCaptor.capture(),
+                winningHandCaptor.capture(),
+                windSettingsCaptor.capture()))
         .willReturn(fakeWinningHand);
 
     var request =
