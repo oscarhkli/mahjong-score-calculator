@@ -6,6 +6,8 @@ import lombok.Value;
 @Value
 public class WinningHand {
 
+  private static final int MAX_SCORE = 13;
+
   List<WinningHandType> winningHandTypes;
 
   public int getFaans() {
@@ -16,6 +18,6 @@ public class WinningHand {
     for (var winningHandType : this.winningHandTypes) {
       score += winningHandType.getScore();
     }
-    return score;
+    return Math.min(score, MAX_SCORE);
   }
 }
