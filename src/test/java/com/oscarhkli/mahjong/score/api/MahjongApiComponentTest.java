@@ -69,22 +69,26 @@ class MahjongApiComponentTest {
                {
                  "type": "COMMON_HAND",
                  "name": "Common Hand",
-                 "faans": 1
+                 "faans": 1,
+                 "limitHand": false
                },
                {
                  "type": "ALL_ONE_SUIT",
                  "name": "All One Suit",
-                 "faans": 7
+                 "faans": 7,
+                 "limitHand": false
                },
                {
                  "type": "WIN_FROM_WALL",
                  "name": "Win From Wall",
-                 "faans": 1
+                 "faans": 1,
+                 "limitHand": false
                },
                {
                  "type": "NO_FLOWERS",
                  "name": "No Flowers/Seasons",
-                 "faans": 1
+                 "faans": 1,
+                 "limitHand": false
                }
              ]
            }
@@ -135,12 +139,14 @@ class MahjongApiComponentTest {
                {
                  "type": "ALL_ONE_SUIT",
                  "name": "All One Suit",
-                 "faans": 7
+                 "faans": 7,
+                 "limitHand": false
                },
                {
                 "type": "NO_FLOWERS",
                 "name": "No Flowers/Seasons",
-                "faans": 1
+                "faans": 1,
+                 "limitHand": false
                }
              ]
            }
@@ -191,12 +197,14 @@ class MahjongApiComponentTest {
                {
                  "type": "ALL_ONE_SUIT",
                  "name": "All One Suit",
-                 "faans": 7
+                 "faans": 7,
+                 "limitHand": false
                },
                {
                 "type": "FLOWER_HANDS",
                 "name": "Flower Hands",
-                "faans": 3
+                "faans": 3,
+                 "limitHand": false
                }
              ]
            }
@@ -247,7 +255,8 @@ class MahjongApiComponentTest {
                {
                  "type": "NINE_GATES",
                  "name": "Nine Gates",
-                 "faans": 10
+                 "faans": 10,
+                 "limitHand": true
                }
              ]
            }
@@ -298,12 +307,14 @@ class MahjongApiComponentTest {
                {
                  "type": "FLOWER_HANDS",
                  "name": "Flower Hands",
-                 "faans": 3
+                 "faans": 3,
+                 "limitHand": false
                },
                {
                  "type": "SELF_PICK_WITHOUT_EXTRA_FAAN",
                  "name": "Self Pick Without Extra Faan Hand",
-                 "faans": 0
+                 "faans": 0,
+                 "limitHand": false
                }
              ]
            }

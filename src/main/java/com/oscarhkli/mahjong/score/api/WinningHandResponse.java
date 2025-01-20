@@ -37,12 +37,14 @@ public class WinningHandResponse {
     WinningHandType type;
     String name;
     int faans;
+    boolean limitHand;
 
     public static WinningHandDescription of(WinningHandType winningHandType) {
       return WinningHandDescription.builder()
           .type(winningHandType)
           .name(winningHandType.getWinningHandName())
           .faans(winningHandType.getScore())
+          .limitHand(winningHandType.isLimitHand())
           .build();
     }
   }
