@@ -2,6 +2,7 @@ package com.oscarhkli.mahjong.score.api;
 
 import com.oscarhkli.mahjong.score.ExposedMelds;
 import com.oscarhkli.mahjong.score.ScoreCalculator;
+import com.oscarhkli.mahjong.score.WinningConditions;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,9 @@ public class MahjongController {
                 request.handTiles(),
                 Optional.ofNullable(request.exposedMelds()).orElseGet(ExposedMelds::new),
                 request.bonusTiles(),
-                request.wind()));
+                request.wind(),
+                Optional.ofNullable(request.winningConditions())
+                    .orElseGet(WinningConditions::new)));
     log.info(
         "Return WinningHandResponse with totalFaans: {}",
         winningHandResponse.getData().getTotalFaans());

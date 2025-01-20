@@ -296,9 +296,14 @@ class MahjongApiComponentTest {
              "totalFaans": 3,
              "winningHands": [
                {
-                "type": "FLOWER_HANDS",
-                "name": "Flower Hands",
-                "faans": 3
+                 "type": "FLOWER_HANDS",
+                 "name": "Flower Hands",
+                 "faans": 3
+               },
+               {
+                 "type": "SELF_PICK_WITHOUT_EXTRA_FAAN",
+                 "name": "Self Pick Without Extra Faan Hand",
+                 "faans": 0
                }
              ]
            }
@@ -306,5 +311,7 @@ class MahjongApiComponentTest {
 
     JSONAssert.assertEquals(expectedResponseJson, response, true);
   }
+
+
 
 }

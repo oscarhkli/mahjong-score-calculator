@@ -2,9 +2,7 @@ package com.oscarhkli.mahjong.score;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.BDDMockito.given;
 
 import java.util.List;
 import java.util.Map;
@@ -12,6 +10,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.BDDSoftAssertions;
 import org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -29,6 +28,7 @@ class ScoreCalculatorTest {
   @InjectMocks @Spy ScoreCalculator scoreCalculator;
   @Spy MeldsFactory meldsFactory;
   @Mock BonusWinningConditionCalculator bonusWinningConditionCalculator;
+  @Mock WinningConditionCalculator winningConditionCalculator;
 
   @ParameterizedTest
   @MethodSource
@@ -39,21 +39,13 @@ class ScoreCalculatorTest {
       List<MahjongTileType> exposedKongs,
       List<WinningHandType> expected) {
     var tiles = tileStrings.stream().map(MahjongTileType::valueOf).toList();
-    lenient()
-        .when(
-            bonusWinningConditionCalculator.calculateBonusWinningConditions(
-                any(Melds.class),
-                any(Melds.class),
-                anyList(),
-                any(WindType.class),
-                any(ExposedMelds.class)))
-        .thenReturn(List.of());
     var winningHandTypes =
         scoreCalculator.calculateWinningHands(
             tiles,
             new ExposedMelds(exposedChows, exposedPongs, exposedKongs),
             List.of(),
-            new WindType(null, null));
+            new WindType(null, null),
+            new WinningConditions(false, false,  false,false, false));
     then(winningHandTypes)
         .as("tiles: %s".formatted(tileStrings))
         .containsExactlyInAnyOrderElementsOf(expected);
@@ -614,5 +606,95 @@ class ScoreCalculatorTest {
                 34, 1,
                 35, 1,
                 38, 1)));
+  }
+
+  @Test
+  void testSelfPickWithAllInTriplets() {
+    // Test case where ExposedMelds is empty, SelfPick is true, and contains ALL_IN_TRIPLETS
+    WinningConditions conditions = new WinningConditions(true, false, false, false, false);
+    ExposedMelds exposedMelds = new ExposedMelds(List.of(), List.of(), List.of()); // Empty melds
+    List<WinningHandType> winningHands = List.of(WinningHandType.ALL_IN_TRIPLETS);
+    List<WinningHandType> bonusWinningHands = List.of();
+
+    List<WinningHandType> result = scoreCalculator.constructFinalWinningHands(conditions, exposedMelds, winningHands, bonusWinningHands);
+
+    // Assert that ALL_IN_TRIPLETS is replaced by SELF_TRIPLETS
+    then(result).containsExactly(WinningHandType.SELF_TRIPLETS)
+        .doesNotContain(WinningHandType.ALL_IN_TRIPLETS);
+  }
+
+  @Test
+  void testSelfPickWithoutAllInTriplets() {
+    // Test case where ExposedMelds is empty, SelfPick is true, but does not contain ALL_IN_TRIPLETS
+    WinningConditions conditions = new WinningConditions(false, false, false, false, false);
+    ExposedMelds exposedMelds = new ExposedMelds(List.of(), List.of(), List.of()); // Empty melds
+    List<WinningHandType> winningHands = List.of(WinningHandType.ALL_IN_TRIPLETS);
+    List<WinningHandType> bonusWinningHands = List.of();
+
+    List<WinningHandType> result = scoreCalculator.constructFinalWinningHands(conditions, exposedMelds, winningHands, bonusWinningHands);
+
+    // Assert that COMMON_HAND is included, and no modification happens
+    then(result).containsExactlyInAnyOrder(WinningHandType.ALL_IN_TRIPLETS);
+  }
+
+  @Test
+  void testEmptyResultsAddsChickenHand() {
+    // Test case where the result is empty and Chicken Hand is added
+    WinningConditions conditions = new WinningConditions(false, false, false, false, false);
+    ExposedMelds exposedMelds = new ExposedMelds(List.of(), List.of(), List.of()); // Empty melds
+    List<WinningHandType> winningHands = List.of();
+    List<WinningHandType> bonusWinningHands = List.of();
+
+    List<WinningHandType> result = scoreCalculator.constructFinalWinningHands(conditions, exposedMelds, winningHands, bonusWinningHands);
+
+    // Assert that CHICKEN_HAND is added
+    then(result).containsExactlyInAnyOrder(WinningHandType.CHICKEN_HAND);
+  }
+
+  @Test
+  void testRemoveWinFromWallIfGreatFlowersPresent() {
+    // Test case where WIN_FROM_WALL is removed if GREAT_FLOWERS or FLOWER_HANDS is in the result
+    WinningConditions conditions = new WinningConditions(false, false, false, false, false);
+    ExposedMelds exposedMelds = new ExposedMelds(List.of(), List.of(), List.of()); // Empty melds
+    List<WinningHandType> winningHands = List.of(WinningHandType.WIN_FROM_WALL);
+    List<WinningHandType> bonusWinningHands = List.of(WinningHandType.GREAT_FLOWERS);
+
+    List<WinningHandType> result = scoreCalculator.constructFinalWinningHands(conditions, exposedMelds, winningHands, bonusWinningHands);
+
+    // Assert that WIN_FROM_WALL is removed when GREAT_FLOWERS is present
+    then(result).containsExactly(WinningHandType.GREAT_FLOWERS)
+        .doesNotContain(WinningHandType.WIN_FROM_WALL);
+  }
+
+  @Test
+  void testBonusWinningHandsAdded() {
+    // Test case where bonusWinningHands are added to the results
+    WinningConditions conditions = new WinningConditions(false, false, false, false, false);
+    ExposedMelds exposedMelds = new ExposedMelds(List.of(), List.of(), List.of()); // Empty melds
+    List<WinningHandType> winningHands = List.of(WinningHandType.COMMON_HAND);
+    List<WinningHandType> bonusWinningHands = List.of(WinningHandType.ALL_FLOWERS);
+
+    List<WinningHandType> result = scoreCalculator.constructFinalWinningHands(conditions, exposedMelds, winningHands, bonusWinningHands);
+
+    // Assert that ALL_FLOWERS is added to the result
+    then(result).containsExactlyInAnyOrder(WinningHandType.COMMON_HAND, WinningHandType.ALL_FLOWERS);
+  }
+
+  @Test
+  void testCalculateExtraWinningHandsCalled() {
+    // Test case to ensure calculateExtraWinningHands is called
+    WinningConditions conditions = new WinningConditions(false, false, false, false, true);
+    ExposedMelds exposedMelds = new ExposedMelds(List.of(), List.of(), List.of(MahjongTileType.D1, MahjongTileType.D2)); // Empty melds
+    List<WinningHandType> winningHands = List.of(WinningHandType.ALL_IN_TRIPLETS);
+    List<WinningHandType> bonusWinningHands = List.of();
+
+    given(winningConditionCalculator.calculateExtraWinningHands(conditions, winningHands, bonusWinningHands))
+        .willReturn(List.of(WinningHandType.WIN_BY_DOUBLE_KONG));
+
+    // You can mock the calculator call if necessary to check if the extra hands are added
+    List<WinningHandType> result = scoreCalculator.constructFinalWinningHands(conditions, exposedMelds, winningHands, bonusWinningHands);
+
+    // Check if the result contains extra hands as per calculateExtraWinningHands
+    then(result).containsExactlyInAnyOrder(WinningHandType.ALL_IN_TRIPLETS, WinningHandType.WIN_BY_DOUBLE_KONG);
   }
 }

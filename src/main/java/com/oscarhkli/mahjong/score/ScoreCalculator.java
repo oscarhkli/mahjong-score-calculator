@@ -17,13 +17,16 @@ public class ScoreCalculator {
 
   private final MeldsFactory meldsFactory;
   private final BonusWinningConditionCalculator bonusWinningConditionCalculator;
+  private final WinningConditionCalculator winningConditionCalculator;
 
   public WinningHand calculate(
       List<MahjongTileType> tiles,
       ExposedMelds exposedMelds,
       List<MahjongTileType> bonusTiles,
-      WindType windSettings) {
-    return new WinningHand(calculateWinningHands(tiles, exposedMelds, bonusTiles, windSettings));
+      WindType windSettings,
+      WinningConditions winningConditions) {
+    return new WinningHand(
+        calculateWinningHands(tiles, exposedMelds, bonusTiles, windSettings, winningConditions));
   }
 
   int[] constructMahjongTiles(List<MahjongTileType> tiles) {
@@ -36,7 +39,8 @@ public class ScoreCalculator {
       List<MahjongTileType> tiles,
       ExposedMelds exposedMelds,
       List<MahjongTileType> bonusTiles,
-      WindType windSettings) {
+      WindType windSettings,
+      WinningConditions winningConditions) {
     var mahjongTiles = constructMahjongTiles(tiles);
 
     if (isAllKongs(mahjongTiles, exposedMelds.getKongs())) {
@@ -63,7 +67,7 @@ public class ScoreCalculator {
     var dotMeldsCandidates = meldsFactory.construct(MahjongSetType.DOT, mahjongTiles, exposedMelds);
 
     var bonusWinningConditions =
-        bonusWinningConditionCalculator.calculateBonusWinningConditions(
+        bonusWinningConditionCalculator.calculateBonusWinningHands(
             windMelds, dragonMelds, bonusTiles, windSettings, exposedMelds);
 
     if (!isValidWinningHand(
@@ -83,17 +87,37 @@ public class ScoreCalculator {
             characterMeldsCandidates,
             bambooMeldsCandidates,
             dotMeldsCandidates);
-    var results = new ArrayList<>(winningHandTypes);
-    results.addAll(bonusWinningConditions);
+    return constructFinalWinningHands(
+        winningConditions, exposedMelds, winningHandTypes, bonusWinningConditions);
+  }
+
+  List<WinningHandType> constructFinalWinningHands(
+      WinningConditions winningConditions,
+      ExposedMelds exposedMelds,
+      List<WinningHandType> winningHands,
+      List<WinningHandType> bonusWinningHands) {
+    var results = new ArrayList<>(winningHands);
+    if (exposedMelds.isEmpty()
+        && winningConditions.isSelfPick()
+        && results.contains(WinningHandType.ALL_IN_TRIPLETS)) {
+      results.remove(WinningHandType.ALL_IN_TRIPLETS);
+      results.add(WinningHandType.SELF_TRIPLETS);
+    }
+
+    log.info("Winning hands found: {}", winningHands);
+    log.info("Bonus hands found: {}", bonusWinningHands);
+    results.addAll(bonusWinningHands);
     if (results.isEmpty()) {
       results.add(WinningHandType.CHICKEN_HAND);
-    }
-    if (results.size() == 2
+    } else if (results.size() == 2
         && results.contains(WinningHandType.WIN_FROM_WALL)
         && (results.contains(WinningHandType.GREAT_FLOWERS)
             || results.contains(WinningHandType.FLOWER_HANDS))) {
       results.remove(WinningHandType.WIN_FROM_WALL);
     }
+    results.addAll(
+        winningConditionCalculator.calculateExtraWinningHands(
+            winningConditions, winningHands, bonusWinningHands));
     return results;
   }
 

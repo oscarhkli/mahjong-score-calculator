@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class BonusWinningConditionCalculator {
 
-  public List<WinningHandType> calculateBonusWinningConditions(
+  public List<WinningHandType> calculateBonusWinningHands(
       Melds windMelds,
       Melds dragonMelds,
       List<MahjongTileType> bonusTiles,

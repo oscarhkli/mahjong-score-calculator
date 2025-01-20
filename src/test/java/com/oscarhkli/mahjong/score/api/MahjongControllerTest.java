@@ -12,6 +12,7 @@ import com.oscarhkli.mahjong.score.ExposedMelds;
 import com.oscarhkli.mahjong.score.MahjongTileType;
 import com.oscarhkli.mahjong.score.ScoreCalculator;
 import com.oscarhkli.mahjong.score.WindType;
+import com.oscarhkli.mahjong.score.WinningConditions;
 import com.oscarhkli.mahjong.score.WinningHand;
 import com.oscarhkli.mahjong.score.WinningHandType;
 import com.oscarhkli.mahjong.score.api.WinningHandResponse.BreakDown;
@@ -45,6 +46,7 @@ class MahjongControllerTest {
   @Captor ArgumentCaptor<ExposedMelds> exposedMeldsCaptor;
   @Captor ArgumentCaptor<List<MahjongTileType>> winningHandCaptor;
   @Captor ArgumentCaptor<WindType> windSettingsCaptor;
+  @Captor ArgumentCaptor<WinningConditions> winningConditionsArgumentCaptor;
 
   @Test
   @SneakyThrows
@@ -56,7 +58,8 @@ class MahjongControllerTest {
                 tilesCaptor.capture(),
                 exposedMeldsCaptor.capture(),
                 winningHandCaptor.capture(),
-                windSettingsCaptor.capture()))
+                windSettingsCaptor.capture(),
+                winningConditionsArgumentCaptor.capture()))
         .willReturn(fakeWinningHand);
 
     var request =
@@ -144,7 +147,8 @@ class MahjongControllerTest {
                 tilesCaptor.capture(),
                 exposedMeldsCaptor.capture(),
                 winningHandCaptor.capture(),
-                windSettingsCaptor.capture()))
+                windSettingsCaptor.capture(),
+                winningConditionsArgumentCaptor.capture()))
         .willReturn(fakeWinningHand);
 
     var request =

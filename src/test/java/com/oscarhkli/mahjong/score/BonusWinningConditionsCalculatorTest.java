@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-class BonusWinningConditionCalculatorTest {
+class BonusWinningConditionsCalculatorTest {
 
   private BonusWinningConditionCalculator bonusWinningConditionCalculator =
       new BonusWinningConditionCalculator();
@@ -35,7 +35,7 @@ class BonusWinningConditionCalculatorTest {
     given(exposedMelds.isEmpty()).willReturn(hasExposedMelds);
 
     var winningHandTypes =
-        bonusWinningConditionCalculator.calculateBonusWinningConditions(
+        bonusWinningConditionCalculator.calculateBonusWinningHands(
             windMelds, dragonMelds, bonusTiles, windSettings, exposedMelds);
 
     then(winningHandTypes).containsExactlyInAnyOrderElementsOf(expected);
