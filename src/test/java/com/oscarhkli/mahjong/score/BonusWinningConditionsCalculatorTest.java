@@ -12,7 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class BonusWinningConditionsCalculatorTest {
 
-  private BonusWinningConditionCalculator bonusWinningConditionCalculator =
+  private final BonusWinningConditionCalculator bonusWinningConditionCalculator =
       new BonusWinningConditionCalculator();
 
   @ParameterizedTest

@@ -250,13 +250,19 @@ class MahjongApiComponentTest {
         """
         {
            "data": {
-             "totalFaans": 10,
+             "totalFaans": 13,
              "winningHands": [
                {
                  "type": "NINE_GATES",
                  "name": "Nine Gates",
                  "faans": 10,
                  "limitHand": true
+               },
+               {
+                 "type": "FLOWER_HANDS",
+                 "name": "Flower Hands",
+                 "faans": 3,
+                 "limitHand": false
                }
              ]
            }

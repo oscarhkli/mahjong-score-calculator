@@ -43,16 +43,14 @@ public class ScoreCalculator {
       WinningConditions winningConditions) {
     var mahjongTiles = constructMahjongTiles(tiles);
 
+    var winningHands = new ArrayList<WinningHandType>();
+
     if (isAllKongs(mahjongTiles, exposedMelds.getKongs())) {
-      return List.of(WinningHandType.ALL_KONGS);
-    }
-
-    if (isThirteenOrphans(mahjongTiles)) {
-      return List.of(WinningHandType.THIRTEEN_ORPHANS);
-    }
-
-    if (isNineGate(mahjongTiles, exposedMelds)) {
-      return List.of(WinningHandType.NINE_GATES);
+      winningHands.add(WinningHandType.ALL_KONGS);
+    } else if (isThirteenOrphans(mahjongTiles)) {
+      winningHands.add(WinningHandType.THIRTEEN_ORPHANS);
+    } else if (isNineGate(mahjongTiles, exposedMelds)) {
+      winningHands.add(WinningHandType.NINE_GATES);
     }
 
     // Wind and Dragon can only have 1 candidate - pongs with/without eyes
@@ -70,25 +68,28 @@ public class ScoreCalculator {
         bonusWinningConditionCalculator.calculateBonusWinningHands(
             windMelds, dragonMelds, bonusTiles, windSettings, exposedMelds);
 
-    if (!isValidWinningHand(
-            windMelds,
-            dragonMelds,
-            characterMeldsCandidates,
-            bambooMeldsCandidates,
-            dotMeldsCandidates)
-        && !bonusWinningConditions.contains(WinningHandType.FLOWER_HANDS)
-        && !bonusWinningConditions.contains(WinningHandType.GREAT_FLOWERS)) {
-      return List.of(WinningHandType.TRICK_HAND);
+    if (winningHands.isEmpty()) {
+      if (!isValidWinningHand(
+              windMelds,
+              dragonMelds,
+              characterMeldsCandidates,
+              bambooMeldsCandidates,
+              dotMeldsCandidates)
+          && !bonusWinningConditions.contains(WinningHandType.FLOWER_HANDS)
+          && !bonusWinningConditions.contains(WinningHandType.GREAT_FLOWERS)) {
+        return List.of(WinningHandType.TRICK_HAND);
+      }
+
+      winningHands.addAll(
+          deduceWinningHand(
+              windMelds,
+              dragonMelds,
+              characterMeldsCandidates,
+              bambooMeldsCandidates,
+              dotMeldsCandidates));
     }
-    var winningHandTypes =
-        deduceWinningHand(
-            windMelds,
-            dragonMelds,
-            characterMeldsCandidates,
-            bambooMeldsCandidates,
-            dotMeldsCandidates);
     return constructFinalWinningHands(
-        winningConditions, exposedMelds, winningHandTypes, bonusWinningConditions);
+        winningConditions, exposedMelds, winningHands, bonusWinningConditions);
   }
 
   List<WinningHandType> constructFinalWinningHands(
@@ -104,8 +105,6 @@ public class ScoreCalculator {
       results.add(WinningHandType.SELF_TRIPLETS);
     }
 
-    log.info("Winning hands found: {}", winningHands);
-    log.info("Bonus hands found: {}", bonusWinningHands);
     results.addAll(bonusWinningHands);
     if (results.isEmpty()) {
       results.add(WinningHandType.CHICKEN_HAND);
@@ -113,6 +112,9 @@ public class ScoreCalculator {
         && results.contains(WinningHandType.WIN_FROM_WALL)
         && (results.contains(WinningHandType.GREAT_FLOWERS)
             || results.contains(WinningHandType.FLOWER_HANDS))) {
+      results.remove(WinningHandType.WIN_FROM_WALL);
+    } else if (results.contains(WinningHandType.NINE_GATES)
+        || results.contains(WinningHandType.THIRTEEN_ORPHANS)) {
       results.remove(WinningHandType.WIN_FROM_WALL);
     }
     results.addAll(

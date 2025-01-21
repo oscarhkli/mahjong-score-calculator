@@ -2,7 +2,6 @@ package com.oscarhkli.mahjong.score;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
