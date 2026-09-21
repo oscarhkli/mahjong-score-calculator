@@ -79,6 +79,7 @@ public class AuthController {
         .value(refreshToken)
         .httpOnly(true)
         .secure(true)
+        .sameSite("Strict")
         .path("/")
         .maxAge(refreshTokenExpirationTime)
         .build();
