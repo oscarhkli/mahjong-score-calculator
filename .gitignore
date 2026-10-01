@@ -38,3 +38,6 @@ build/
 certificates/
 *.pem
 *.p12
+
+# Docker deploy artifact
+msc-deploy.tar
