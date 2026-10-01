@@ -15,4 +15,4 @@ COPY ${DEPENDENCY}/BOOT-INF/classes /app
 ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 
 # ENTRYPOINT to run the Spring Boot application
-ENTRYPOINT ["java","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-cp","app:app/lib/*","com.oscarhkli.mahjong.score.MahjongScoreCalculatorApplication"]
+ENTRYPOINT ["java","-XX:MaxMetaspaceSize=128m","-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}","-cp","app:app/lib/*","com.oscarhkli.mahjong.score.MahjongScoreCalculatorApplication"]
